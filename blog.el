@@ -83,6 +83,7 @@ date: %s
       title
       (format-time-string "%Y-%m-%d %H:%M:%S %z")))))
 
+;;;###autoload
 (defun blog-edit (file)
   "Open an existing blog post for editing."
   (interactive
