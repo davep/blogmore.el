@@ -2,10 +2,10 @@
 ;; Copyright 2026 by Dave Pearson <davep@davep.org>
 
 ;; Author: Dave Pearson <davep@davep.org>
-;; Version: 1.1
+;; Version: 1.2
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blog.el
-;; Package-Requires: ((emacs "25.1"))
+;; Package-Requires: ((emacs "25.1") (end-it "1.20"))
 
 ;; This program is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the
@@ -29,6 +29,8 @@
 
 ;;; Code:
 
+(require 'end-it)
+
 (defconst blog-directory "~/write/davep.github.com/"
   "Root directory for my blog.")
 
@@ -41,7 +43,7 @@ title: %s
 category:
 tags:
 date: %s
----\n\n"
+---\n\n\n\n"
   "Template for new blog posts.")
 
 (defun blog--slug (title)
@@ -81,7 +83,10 @@ date: %s
      (format
       blog-template
       title
-      (format-time-string "%Y-%m-%d %H:%M:%S %z")))))
+      (format-time-string "%Y-%m-%d %H:%M:%S %z")))
+    (forward-line -2)
+    (save-excursion
+      (end-it))))
 
 ;;;###autoload
 (defun blog-edit (file)
@@ -89,6 +94,7 @@ date: %s
   (interactive
    (list
     (completing-read
+
      "File: "
      (directory-files-recursively blog-posts-directory "\\.md$"))))
   (find-file file))
