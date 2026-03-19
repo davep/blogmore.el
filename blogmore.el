@@ -5,7 +5,7 @@
 ;; Version: 1.3
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blogmoe.el
-;; Package-Requires: ((emacs "25.1") (end-it "1.20"))
+;; Package-Requires: ((emacs "27.1") (end-it "1.20"))
 
 ;; This program is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the
@@ -52,6 +52,12 @@ date: %s
 (defconst blogmore--category-regexp (rx bol "category:" (* space) (group (* any)) eol)
   "Regular expression for matching a category data.")
 
+(defconst blogmore--tags-regexp-line (rx bol "tags:" (* nonl) eol)
+  "Regular expression to match tag lines in blog posts.")
+
+(defconst blogmore--tags-regexp (rx bol "tags:" (* space) (group (* any)) eol)
+  "Regular expression to match tag data.")
+
 (defun blogmore--slug (title)
   "Generate a slug from the given TITLE."
   (thread-last
@@ -84,6 +90,12 @@ date: %s
     (goto-char (point-min))
     (looking-at "---\n")))
 
+(defun blogmore--get-all (property)
+  "Get a list of all values for PROPERTY from existing posts."
+  (delete-dups
+   (split-string
+    (shell-command-to-string (format "grep -h '^%s:' %s/**/*.md" property blogmore-posts-directory)) "\n" t)))
+
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
   (sort
@@ -93,9 +105,18 @@ date: %s
      (lambda (candidate)
        (when (string-match blogmore--category-regexp candidate)
          (string-trim (match-string 1 candidate))))
-     (delete-dups
-      (split-string
-       (shell-command-to-string (format "grep -h '^category:' %s/**/*.md" blogmore-posts-directory)) "\n" t))))))
+     (blogmore--get-all "category")))))
+
+(defun blogmore--current-tags ()
+  "Get a list of tags from existing posts."
+  (sort
+   (delete-dups
+    (flatten-list
+     (mapcar
+      (lambda (candidate)
+        (when (string-match blogmore--tags-regexp candidate)
+          (split-string (match-string 1 candidate) "," t " ")))
+      (blogmore--get-all "tags"))))))
 
 ;;;###autoload
 (defun blogmore-new (title)
@@ -137,6 +158,22 @@ date: %s
         (error "Could not find a location to insert the category"))
       (beginning-of-line)
       (insert (format "category: %s\n" category)))))
+
+;;;###autoload
+(defun blogmore-add-tag (tag)
+  "Add TAG to the post's tags."
+  (interactive (list (completing-read "Tag: " (blogmore--current-tags))))
+  (unless (blogmore--post-p)
+    (error "This doesn't look like a blog post"))
+  ;; TODO: Not working with empty tags or missing tags yet.
+  (save-excursion
+    (goto-char (point-min))
+    (if (re-search-forward blogmore--tags-regexp nil t)
+        (let* ((existing-tags (split-string (save-excursion (match-string 1)) "," t " "))
+               (new-tags (delete-dups (append existing-tags (list tag)))))
+          (beginning-of-line)
+          (kill-line)
+          (insert (format "tags: %s" (string-join new-tags ", ")))))))
 
 (provide 'blogmore)
 
