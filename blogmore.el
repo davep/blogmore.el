@@ -59,7 +59,7 @@ argument is the date."
   :group 'blogmore)
 
 
-;;; Support code:
+;;; Code:
 
 (defconst blogmore--frontmatter-marker-regexp (rx bol "---" eol)
   "Regular expression to match the frontmatter marker in blog posts.")
