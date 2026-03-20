@@ -2,7 +2,7 @@
 ;; Copyright 2026 by Dave Pearson <davep@davep.org>
 
 ;; Author: Dave Pearson <davep@davep.org>
-;; Version: 1.3
+;; Version: 1.4
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blogmoe.el
 ;; Package-Requires: ((emacs "27.1") (end-it "1.20"))
