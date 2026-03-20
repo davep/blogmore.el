@@ -199,8 +199,8 @@ frontmatter."
   (interactive
    (list
     (completing-read
-     "File: "
-     (directory-files-recursively blogmore-posts-directory "\\.md$"))))
+     "Post: "
+     (directory-files-recursively blogmore-posts-directory (rx ".md" eol)))))
   (find-file file))
 
 (defun blogmore--with (prompt existing-values)
