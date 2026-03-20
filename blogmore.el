@@ -22,8 +22,8 @@
 
 ;;; Commentary:
 ;;
-;; blog.el is a small Emacs package that provides tools for working with my
-;; personal blog. It includes commands for creating new blog posts and
+;; blogmore.el is a small Emacs package that provides tools for working with
+;; my personal blog. It includes commands for creating new blog posts and
 ;; editing existing ones, as well as some helper functions for generating
 ;; slugs and ensuring directories exist.
 
