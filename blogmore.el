@@ -178,7 +178,9 @@ date: %s
              (replace-match (format "tags: %s" (string-join new-tags ", ")) t)))
           ((re-search-forward "^---$" nil t 2)
            (beginning-of-line)
-           (insert (format "tags: %s\n" tag))))))
+           (insert (format "tags: %s\n" tag)))
+          (t
+           (error "Could not find a location to insert the tag")))))
 
 (provide 'blogmore)
 
