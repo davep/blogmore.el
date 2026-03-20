@@ -52,7 +52,7 @@ date: %s
 (defconst blogmore--category-regexp (rx bol "category:" (* space) (group (* any)) eol)
   "Regular expression for matching a category data.")
 
-(defconst blogmore--tags-regexp-line (rx bol "tags:" (* nonl) eol)
+(defconst blogmore--tags-regexp-line (rx bol "tags:")
   "Regular expression to match tag lines in blog posts.")
 
 (defconst blogmore--tags-regexp (rx bol "tags:" (* space) (group (* any)) eol)
@@ -165,15 +165,18 @@ date: %s
   (interactive (list (completing-read "Tag: " (blogmore--current-tags))))
   (unless (blogmore--post-p)
     (error "This doesn't look like a blog post"))
-  ;; TODO: Not working with empty tags or missing tags yet.
   (save-excursion
     (goto-char (point-min))
-    (if (re-search-forward blogmore--tags-regexp nil t)
-        (let* ((existing-tags (split-string (save-excursion (match-string 1)) "," t " "))
-               (new-tags (delete-dups (append existing-tags (list tag)))))
-          (beginning-of-line)
-          (kill-line)
-          (insert (format "tags: %s" (string-join new-tags ", ")))))))
+    (cond ((re-search-forward blogmore--tags-regexp-line nil t)
+           (let* ((existing-tags (save-match-data
+                                   (string-split (buffer-substring (point) (line-end-position)) "," t " ")))
+                  (new-tags (sort (delete-dups (append existing-tags (list tag))))))
+             (unless (eolp)
+               (kill-line))
+             (replace-match (format "tags: %s" (string-join new-tags ", ")) t)))
+          ((re-search-forward "^---$" nil t 2)
+           (beginning-of-line)
+           (insert (format "tags: %s\n" tag))))))
 
 (provide 'blogmore)
 
