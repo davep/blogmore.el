@@ -4,7 +4,7 @@
 ;; Author: Dave Pearson <davep@davep.org>
 ;; Version: 1.5
 ;; Keywords: convenience
-;; URL: https://github.com/davep/blogmoe.el
+;; URL: https://github.com/davep/blogmore.el
 ;; Package-Requires: ((emacs "29.1"))
 
 ;; This program is free software: you can redistribute it and/or modify it
