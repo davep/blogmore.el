@@ -58,6 +58,9 @@ date: %s
 (defconst blogmore--tags-regexp (rx bol "tags:" (* space) (group (* any)) eol)
   "Regular expression to match tag data.")
 
+(defconst blogmore--frontmatter-marker-regexp (rx bol "---" eol)
+  "Regular expression to match the frontmatter marker in blog posts.")
+
 (defun blogmore--slug (title)
   "Generate a slug from the given TITLE."
   (thread-last
@@ -158,7 +161,7 @@ date: %s
     (goto-char (point-min))
     (cond ((re-search-forward blogmore--category-regexp-line nil t)
            (replace-match (format "category: %s" category) t))
-          ((re-search-forward "^---$" nil t 2)
+          ((re-search-forward blogmore--frontmatter-marker-regexp nil t 2)
            (beginning-of-line)
            (insert (format "category: %s\n" category)))
           (t
@@ -177,7 +180,7 @@ date: %s
              (unless (eolp)
                (kill-line))
              (replace-match (format "tags: %s" (string-join new-tags ", ")) t)))
-          ((re-search-forward "^---$" nil t 2)
+          ((re-search-forward blogmore--frontmatter-marker-regexp nil t 2)
            (beginning-of-line)
            (insert (format "tags: %s\n" tag)))
           (t
