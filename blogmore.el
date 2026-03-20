@@ -139,7 +139,7 @@ date: %s
 
 ;;;###autoload
 (defun blogmore-edit (file)
-  "Edit FILE from my blog.."
+  "Edit FILE from my blog."
   (interactive
    (list
     (completing-read
