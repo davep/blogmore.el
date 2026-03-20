@@ -46,12 +46,6 @@ date: %s
 ---\n\n\n\n"
   "Template for new blog posts.")
 
-(defconst blogmore--category-regexp (rx bol "category:" (* space) (group (* any)) eol)
-  "Regular expression for matching a category data.")
-
-(defconst blogmore--tags-regexp (rx bol "tags:" (* space) (group (* any)) eol)
-  "Regular expression to match tag data.")
-
 (defconst blogmore--frontmatter-marker-regexp (rx bol "---" eol)
   "Regular expression to match the frontmatter marker in blog posts.")
 
@@ -154,7 +148,7 @@ frontmatter."
     nil
     (mapcar
      (lambda (candidate)
-       (when (string-match blogmore--category-regexp candidate)
+       (when (string-match (rx bol "category:" (* space) (group (* any)) eol) candidate)
          (string-trim (match-string 1 candidate))))
      (blogmore--get-all "category")))))
 
@@ -165,7 +159,7 @@ frontmatter."
     (flatten-list
      (mapcar
       (lambda (candidate)
-        (when (string-match blogmore--tags-regexp candidate)
+        (when (string-match (rx bol "tags:" (* space) (group (* any)) eol) candidate)
           (split-string (match-string 1 candidate) "," t " ")))
       (blogmore--get-all "tags"))))))
 
