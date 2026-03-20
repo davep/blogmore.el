@@ -178,6 +178,13 @@ frontmatter."
           (split-string (match-string 1 candidate) "," t " ")))
       (blogmore--get-all "tags"))))))
 
+(defun blogmore--post-picker ()
+  "Pick a post from the list of existing posts."
+  (list
+   (completing-read
+    "Post: "
+    (directory-files-recursively blogmore-posts-directory (rx ".md" eol)))))
+
 
 ;; Commands:
 
@@ -196,11 +203,7 @@ frontmatter."
 ;;;###autoload
 (defun blogmore-edit (file)
   "Edit FILE from my blog."
-  (interactive
-   (list
-    (completing-read
-     "Post: "
-     (directory-files-recursively blogmore-posts-directory (rx ".md" eol)))))
+  (interactive (blogmore--post-picker))
   (find-file file))
 
 (defun blogmore--with (prompt existing-values)
