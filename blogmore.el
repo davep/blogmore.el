@@ -130,7 +130,7 @@ frontmatter."
 
 (defun blogmore--post-directory ()
   "Get the directory for the current year's blog posts."
-  (format "%s/%s" blogmore-posts-directory (format-time-string "%Y")))
+  (format "%s%s" (file-name-as-directory blogmore-posts-directory) (format-time-string "%Y")))
 
 (defun blogmore--ensure-directory ()
   "Ensure that the given directory exists."
