@@ -2,7 +2,7 @@
 ;; Copyright 2026 by Dave Pearson <davep@davep.org>
 
 ;; Author: Dave Pearson <davep@davep.org>
-;; Version: 1.6
+;; Version: 1.7
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blogmore.el
 ;; Package-Requires: ((emacs "29.1"))
@@ -178,6 +178,13 @@ frontmatter."
           (split-string (match-string 1 candidate) "," t " ")))
       (blogmore--get-all "tags"))))))
 
+(defun blogmore--post-picker ()
+  "Pick a post from the list of existing posts."
+  (list
+   (completing-read
+    "Post: "
+    (directory-files-recursively blogmore-posts-directory (rx ".md" eol)))))
+
 
 ;; Commands:
 
@@ -196,11 +203,7 @@ frontmatter."
 ;;;###autoload
 (defun blogmore-edit (file)
   "Edit FILE from my blog."
-  (interactive
-   (list
-    (completing-read
-     "Post: "
-     (directory-files-recursively blogmore-posts-directory (rx ".md" eol)))))
+  (interactive (blogmore--post-picker))
   (find-file file))
 
 (defun blogmore--with (prompt existing-values)
@@ -239,6 +242,17 @@ frontmatter."
   "Update the modified date of the post to the current date and time."
   (interactive)
   (blogmore--set-frontmatter-property "modified" (blogmore--now)))
+
+(defun blogmore-link-post (file)
+  "Insert a link to FILE from my blog."
+  (interactive (blogmore--post-picker))
+  (let ((link (replace-regexp-in-string
+               (rx bos (group (+ digit)) "-" (group (+ digit)) "-" (group (+ digit)) "-")
+               "\\1/\\2/\\3/"
+               (file-name-base (file-name-sans-extension file)))))
+    (save-excursion
+      (insert (format "[](/%s.html)" link)))
+    (forward-char)))
 
 (provide 'blogmore)
 
