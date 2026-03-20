@@ -63,6 +63,10 @@ date: %s
     (replace-regexp-in-string "[^a-z0-9]+" "-")
     (replace-regexp-in-string "^-\\|-$" "")))
 
+(defun blogmore--now ()
+  "Return the current date and time as a string."
+  (format-time-string "%Y-%m-%d %H:%M:%S%z"))
+
 (defun blogmore--frontmatter-bounds ()
   "Return the bounds of the frontmatter as a cons cell (START . END).
 
@@ -172,11 +176,7 @@ frontmatter."
   (blogmore--ensure-directory)
   (find-file (blogmore--file-from-title title))
   (when (string-empty-p (buffer-string))
-    (insert
-     (format
-      blogmore-template
-      title
-      (format-time-string "%Y-%m-%d %H:%M:%S %z")))
+    (insert (format blogmore-template title (blogmore--now)))
     (forward-line -2)
     (save-excursion
       (end-it))))
@@ -215,6 +215,12 @@ frontmatter."
       (append
        (string-split (or (blogmore--get-frontmatter-property "tags") "") "," t " ")
        (list tag)))) ", ")))
+
+;;;###autoload
+(defun blogmore-update-date ()
+  "Update the date of the post to the current date and time."
+  (interactive)
+  (blogmore--set-frontmatter-property "date" (blogmore--now)))
 
 (provide 'blogmore)
 
