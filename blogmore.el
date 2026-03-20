@@ -5,7 +5,7 @@
 ;; Version: 1.4
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blogmoe.el
-;; Package-Requires: ((emacs "27.1") (end-it "1.20"))
+;; Package-Requires: ((emacs "29.1") (end-it "1.20"))
 
 ;; This program is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the
