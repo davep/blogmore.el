@@ -58,6 +58,27 @@ argument is the date."
   :type 'hook
   :group 'blogmore)
 
+(defcustom blogmore-post-link-maker-function
+  (lambda (file)
+    (format "/%s.html"
+            (replace-regexp-in-string
+             (rx bos (group (+ digit)) "-" (group (+ digit)) "-" (group (+ digit)) "-")
+             "\\1/\\2/\\3/"
+             (file-name-base (file-name-sans-extension file)))))
+  "Function to generate a link for a blog post from its filename."
+  :type 'function
+  :group 'blogmore)
+
+(defcustom blogmore-category-maker-function #'blogmore--slug
+  "Function to generate a slug for a category."
+  :type 'function
+  :group 'blogmore)
+
+(defcustom blogmore-tag-maker-function #'blogmore--slug
+  "Function to generate a slug for a tag."
+  :type 'function
+  :group 'blogmore)
+
 (defcustom blogmore-category-link-format "/category/%s/"
   "Format string for a link to a category."
   :type 'string
@@ -263,25 +284,23 @@ frontmatter."
 (defun blogmore-link-post (file)
   "Insert a link to FILE from my blog."
   (interactive (blogmore--post-picker))
-  (let ((link (replace-regexp-in-string
-               (rx bos (group (+ digit)) "-" (group (+ digit)) "-" (group (+ digit)) "-")
-               "\\1/\\2/\\3/"
-               (file-name-base (file-name-sans-extension file)))))
-    (save-excursion
-      (insert (format "[](/%s.html)" link)))
-    (forward-char)))
+  (blogmore--insert-link (funcall blogmore-post-link-maker-function file)))
 
 ;;;###autoload
 (defun blogmore-insert-category (category)
   "Insert a link to CATEGORY on my blog."
   (interactive (blogmore--with "Category: " (blogmore--current-categories)))
-  (blogmore--insert-link (format blogmore-category-link-format (blogmore--slug category))))
+  (blogmore--insert-link
+   (format blogmore-category-link-format
+           (funcall blogmore-category-maker-function category))))
 
 ;;;###autoload
 (defun blogmore-insert-tag (tag)
   "Insert a link to TAG on my blog."
   (interactive (blogmore--with "Tag: " (blogmore--current-tags)))
-  (blogmore--insert-link (format blogmore-tag-link-format (blogmore--slug tag))))
+  (blogmore--insert-link
+   (format blogmore-tag-link-format
+           (funcall blogmore-tag-maker-function tag))))
 
 (provide 'blogmore)
 
