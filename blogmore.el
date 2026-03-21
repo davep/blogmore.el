@@ -293,7 +293,7 @@ frontmatter."
            (funcall blogmore-post-maker-function file))))
 
 ;;;###autoload
-(defun blogmore-insert-category (category)
+(defun blogmore-link-category (category)
   "Insert a link to CATEGORY on my blog."
   (interactive (blogmore--with "Category: " (blogmore--current-categories)))
   (blogmore--insert-link
@@ -301,7 +301,7 @@ frontmatter."
            (funcall blogmore-category-maker-function category))))
 
 ;;;###autoload
-(defun blogmore-insert-tag (tag)
+(defun blogmore-link-tag (tag)
   "Insert a link to TAG on my blog."
   (interactive (blogmore--with "Tag: " (blogmore--current-tags)))
   (blogmore--insert-link
