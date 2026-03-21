@@ -58,13 +58,12 @@ argument is the date."
   :type 'hook
   :group 'blogmore)
 
-(defcustom blogmore-post-link-maker-function
+(defcustom blogmore-post-maker-function
   (lambda (file)
-    (format "/%s.html"
-            (replace-regexp-in-string
-             (rx bos (group (+ digit)) "-" (group (+ digit)) "-" (group (+ digit)) "-")
-             "\\1/\\2/\\3/"
-             (file-name-base (file-name-sans-extension file)))))
+    (replace-regexp-in-string
+     (rx bos (group (+ digit)) "-" (group (+ digit)) "-" (group (+ digit)) "-")
+     "\\1/\\2/\\3/"
+     (file-name-base (file-name-sans-extension file))))
   "Function to generate a link for a blog post from its filename."
   :type 'function
   :group 'blogmore)
@@ -77,6 +76,11 @@ argument is the date."
 (defcustom blogmore-tag-maker-function #'blogmore--slug
   "Function to generate a slug for a tag."
   :type 'function
+  :group 'blogmore)
+
+(defcustom blogmore-post-link-format "/%s.html"
+  "Format string for a link to a blog post."
+  :type 'string
   :group 'blogmore)
 
 (defcustom blogmore-category-link-format "/category/%s/"
@@ -284,7 +288,9 @@ frontmatter."
 (defun blogmore-link-post (file)
   "Insert a link to FILE from my blog."
   (interactive (blogmore--post-picker))
-  (blogmore--insert-link (funcall blogmore-post-link-maker-function file)))
+  (blogmore--insert-link
+   (format blogmore-post-link-format
+           (funcall blogmore-post-maker-function file))))
 
 ;;;###autoload
 (defun blogmore-insert-category (category)
