@@ -58,6 +58,11 @@ argument is the date."
   :type 'hook
   :group 'blogmore)
 
+(defcustom blogmore-tag-link-format "/tag/%s/"
+  "Format string for a link to a tag."
+  :type 'string
+  :group 'blogmore)
+
 
 ;;; Code:
 
@@ -243,6 +248,7 @@ frontmatter."
   (interactive)
   (blogmore--set-frontmatter-property "modified" (blogmore--now)))
 
+;;;###autoload
 (defun blogmore-link-post (file)
   "Insert a link to FILE from my blog."
   (interactive (blogmore--post-picker))
@@ -253,6 +259,14 @@ frontmatter."
     (save-excursion
       (insert (format "[](/%s.html)" link)))
     (forward-char)))
+
+;;;###autoload
+(defun blogmore-insert-tag (tag)
+  "Insert a link to TAG on my blog."
+  (interactive (blogmore--with "Tag: " (blogmore--current-tags)))
+  (save-excursion
+    (insert (format "[](%s)" (format blogmore-tag-link-format (blogmore--slug tag)))))
+  (forward-char))
 
 (provide 'blogmore)
 
