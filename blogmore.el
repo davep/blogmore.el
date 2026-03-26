@@ -2,7 +2,7 @@
 ;; Copyright 2026 by Dave Pearson <davep@davep.org>
 
 ;; Author: Dave Pearson <davep@davep.org>
-;; Version: 1.8
+;; Version: 1.9
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blogmore.el
 ;; Package-Requires: ((emacs "29.1"))
@@ -302,7 +302,9 @@ frontmatter."
   (interactive (blogmore--with "Category: " (blogmore--current-categories)))
   (blogmore--insert-link
    (format blogmore-category-link-format
-           (funcall blogmore-category-maker-function category))))
+           (funcall blogmore-category-maker-function category)))
+  (save-excursion
+    (insert category)))
 
 ;;;###autoload
 (defun blogmore-link-tag (tag)
@@ -310,7 +312,9 @@ frontmatter."
   (interactive (blogmore--with "Tag: " (blogmore--current-tags)))
   (blogmore--insert-link
    (format blogmore-tag-link-format
-           (funcall blogmore-tag-maker-function tag))))
+           (funcall blogmore-tag-maker-function tag)))
+  (save-excursion
+    (insert tag)))
 
 (provide 'blogmore)
 
