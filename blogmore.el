@@ -111,7 +111,7 @@ argument is the date."
          (cdr blogmore--current-blog))
         ((= (length blogmore-blogs) 1)
          ;; There's only one blog defined, so use that.
-         (cdr (car blogmore-blogs)))
+         (cdar blogmore-blogs))
         (blogmore-blogs
          ;; There are multiple blogs defined, so we can't work out the best
          ;; option.
