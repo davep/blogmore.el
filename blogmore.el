@@ -104,14 +104,14 @@ argument is the date."
 (defvar blogmore--current-blog nil
   "The current blog being worked on.")
 
-(defun blogmore--posts-directory ()
-  "Get the posts directory for the current blog."
+(defun blogmore--chosen-blog ()
+  "Get the details of the currently-chosen blog.."
   (cond (blogmore--current-blog
          ;; The user has chosen a blog, so use that.
-         (cdr blogmore--current-blog))
+         blogmore--current-blog)
         ((= (length blogmore-blogs) 1)
          ;; There's only one blog defined, so use that.
-         (cdar blogmore-blogs))
+         (car blogmore-blogs))
         (blogmore-blogs
          ;; There are multiple blogs defined, so we can't work out the best
          ;; option.
@@ -120,6 +120,14 @@ argument is the date."
          ;; There are no blogs defined, so we can't work out the best
          ;; option.
          (error "No blogs defined; please add one to `blogmore-blogs'"))))
+
+(defun blogmore--blog-title ()
+  "Get the title of the current blog."
+  (car (blogmore--chosen-blog)))
+
+(defun blogmore--posts-directory ()
+  "Get the posts directory for the current blog."
+  (cdr (blogmore--chosen-blog)))
 
 (defconst blogmore--frontmatter-marker-regexp (rx bol "---" eol)
   "Regular expression to match the frontmatter marker in blog posts.")
