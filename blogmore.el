@@ -54,7 +54,7 @@ The keys are the names of the blogs, and the values are lists of the form
    TAG-MAKER-FUNCTION
    POST-LINK-FORMAT
    CATEGORY-LINK-FORMAT
-   TAG-LINK-FORMAT
+   TAG-LINK-FORMAT)
 
 Where:
 - POSTS-DIRECTORY is the directory where the blog's posts are stored.
@@ -69,13 +69,13 @@ Where:
 - TAG-MAKER-FUNCTION is a function that takes a tag name and returns a
   string to be used in the tag's URL. If nil,
   `blogmore-default-tag-maker-function' is used.
-- POST-LINK-FORMAT is a format string for the post's URL, where % is
+- POST-LINK-FORMAT is a format string for the post's URL, where %s is
   replaced with the value returned by the post maker function. If nil,
   `blogmore-default-post-link-format' is used.
 - CATEGORY-LINK-FORMAT is a format string for the category's URL, where
-  % is replaced with the value returned by the category maker function.
+  %s is replaced with the value returned by the category maker function.
   If nil, `blogmore-default-category-link-format' is used.
-- TAG-LINK-FORMAT is a format string for the tag's URL, where % is
+- TAG-LINK-FORMAT is a format string for the tag's URL, where %s is
   replaced with the value returned by the tag maker function. If nil,
   `blogmore-default-tag-link-format' is used."
   :type
