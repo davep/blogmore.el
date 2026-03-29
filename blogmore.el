@@ -250,7 +250,7 @@ frontmatter."
   "Pick a post from the list of existing posts."
   (list
    (completing-read
-    "Post: "
+    (format "Post from %s: " (blogmore--blog-title))
     (directory-files-recursively (blogmore--posts-directory) (rx ".md" eol)))))
 
 (defun blogmore--insert-link (link)
@@ -262,7 +262,7 @@ frontmatter."
 (defun blogmore--with (prompt existing-values)
   "Prompt the user with PROMPT and offer EXISTING-VALUES as completions."
   (if (blogmore--post-p)
-      (list (completing-read prompt existing-values))
+      (list (completing-read (format "%s from %s:" prompt (blogmore--blog-title)) existing-values))
     (error "This doesn't look like a blog post")))
 
 
@@ -277,7 +277,7 @@ frontmatter."
 ;;;###autoload
 (defun blogmore-new (title)
   "Start a new blog post with a title of TITLE."
-  (interactive "sTitle: ")
+  (interactive (list (read-string (format "Title of new post for %s: " (blogmore--blog-title)))))
   (blogmore--ensure-directory)
   (find-file (blogmore--file-from-title title))
   (when (string-empty-p (buffer-string))
@@ -295,13 +295,13 @@ frontmatter."
 ;;;###autoload
 (defun blogmore-set-category (category)
   "Set the category of the post to CATEGORY."
-  (interactive (blogmore--with "Category: " (blogmore--current-categories)))
+  (interactive (blogmore--with "Category" (blogmore--current-categories)))
   (blogmore--set-frontmatter-property "category" category))
 
 ;;;###autoload
 (defun blogmore-add-tag (tag)
   "Add TAG to the post's tags."
-  (interactive (blogmore--with "Tag: " (blogmore--current-tags)))
+  (interactive (blogmore--with "Tag" (blogmore--current-tags)))
   (blogmore--set-frontmatter-property
    "tags"
    (string-join
@@ -334,7 +334,7 @@ frontmatter."
 ;;;###autoload
 (defun blogmore-link-category (category)
   "Insert a link to CATEGORY on my blog."
-  (interactive (blogmore--with "Category: " (blogmore--current-categories)))
+  (interactive (blogmore--with "Category" (blogmore--current-categories)))
   (blogmore--insert-link
    (format blogmore-category-link-format
            (funcall blogmore-category-maker-function category)))
@@ -344,7 +344,7 @@ frontmatter."
 ;;;###autoload
 (defun blogmore-link-tag (tag)
   "Insert a link to TAG on my blog."
-  (interactive (blogmore--with "Tag: " (blogmore--current-tags)))
+  (interactive (blogmore--with "Tag" (blogmore--current-tags)))
   (blogmore--insert-link
    (format blogmore-tag-link-format
            (funcall blogmore-tag-maker-function tag)))
