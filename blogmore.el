@@ -345,9 +345,9 @@ frontmatter."
     (shell-command-to-string
      (format
       (if (executable-find "rg")
-          "rg --no-filename --no-line-number --no-heading \"^%1$s\" %2$s -g \"*.md\""
-        "find %2$s -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
-      property (blogmore--posts-directory))) "\n" t)))
+          "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
+        "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
+      property (expand-file-name (blogmore--posts-directory)))) "\n" t)))
 
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
