@@ -219,7 +219,7 @@ argument is the date."
 
 (defun blogmore--posts-directory ()
   "Get the posts directory for the current blog."
-  (blogmore--blog-posts-directory (blogmore--chosen-blog)))
+  (expand-file-name (blogmore--blog-posts-directory (blogmore--chosen-blog))))
 
 (defun blogmore--post-template ()
   "Get the post template for the current blog."
@@ -347,7 +347,7 @@ frontmatter."
       (if (executable-find "rg")
           "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
         "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
-      property (expand-file-name (blogmore--posts-directory)))) "\n" t)))
+      property (blogmore--posts-directory))) "\n" t)))
 
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
