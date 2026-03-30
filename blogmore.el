@@ -59,7 +59,7 @@ The keys are the names of the blogs, and the values are lists of the form
 Where:
 - POSTS-DIRECTORY is the directory where the blog's posts are stored.
 - POST-TEMPLATE is a template for new posts. If nil,
-  `blogmore-default-template' is used.
+  `blogmore-default-post-template' is used.
 - POST-MAKER-FUNCTION is a function that takes a filename and returns a
   string to be used in the post's URL. If nil,
   `blogmore-default-post-maker-function' is used.
@@ -107,7 +107,7 @@ Where:
                         (string :tag "Custom"))))
   :group 'blogmore)
 
-(defcustom blogmore-default-template "---
+(defcustom blogmore-default-post-template "---
 title: %1$s
 date: %2$s
 category:
@@ -223,7 +223,7 @@ argument is the date."
 
 (defun blogmore--post-template ()
   "Get the post template for the current blog."
-  (or (blogmore--blog-post-template (blogmore--chosen-blog)) blogmore-default-template))
+  (or (blogmore--blog-post-template (blogmore--chosen-blog)) blogmore-default-post-template))
 
 (defun blogmore--post-maker-function ()
   "Get the post maker function for the current blog."
