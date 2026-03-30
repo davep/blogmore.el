@@ -221,33 +221,20 @@ argument is the date."
   "Get the posts directory for the current blog."
   (expand-file-name (blogmore--blog-posts-directory (blogmore--chosen-blog))))
 
-(defun blogmore--post-template ()
-  "Get the post template for the current blog."
-  (or (blogmore--blog-post-template (blogmore--chosen-blog)) blogmore-default-post-template))
+(defmacro blogmore--setting (setting)
+  "Generate a function to get the value of SETTING for the current blog."
+  `(defun ,(intern (format "blogmore--%s" setting)) ()
+     ,(format "Get the %s for the current blog." setting)
+     (or (,(intern (format "blogmore--blog-%s" setting)) (blogmore--chosen-blog))
+         ,(intern (format "blogmore-default-%s" setting)))))
 
-(defun blogmore--post-maker-function ()
-  "Get the post maker function for the current blog."
-  (or (blogmore--blog-post-maker-function (blogmore--chosen-blog)) blogmore-default-post-maker-function))
-
-(defun blogmore--category-maker-function ()
-  "Get the category maker function for the current blog."
-  (or (blogmore--blog-category-maker-function (blogmore--chosen-blog)) blogmore-default-category-maker-function))
-
-(defun blogmore--tag-maker-function ()
-  "Get the tag maker function for the current blog."
-  (or (blogmore--blog-tag-maker-function (blogmore--chosen-blog)) blogmore-default-tag-maker-function))
-
-(defun blogmore--post-link-format ()
-  "Get the post link format for the current blog."
-  (or (blogmore--blog-post-link-format (blogmore--chosen-blog)) blogmore-default-post-link-format))
-
-(defun blogmore--category-link-format ()
-  "Get the category link format for the current blog."
-  (or (blogmore--blog-category-link-format (blogmore--chosen-blog)) blogmore-default-category-link-format))
-
-(defun blogmore--tag-link-format ()
-  "Get the tag link format for the current blog."
-  (or (blogmore--blog-tag-link-format (blogmore--chosen-blog)) blogmore-default-tag-link-format))
+(blogmore--setting post-template)
+(blogmore--setting post-maker-function)
+(blogmore--setting category-maker-function)
+(blogmore--setting tag-maker-function)
+(blogmore--setting post-link-format)
+(blogmore--setting category-link-format)
+(blogmore--setting tag-link-format)
 
 (defconst blogmore--frontmatter-marker-regexp (rx bol "---" eol)
   "Regular expression to match the frontmatter marker in blog posts.")
