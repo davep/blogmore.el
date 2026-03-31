@@ -286,18 +286,30 @@ frontmatter."
         (goto-char (point-max))
         nil))))
 
+(cl-defstruct (blogmore--frontmatter-property-location (:type list))
+  "A struct representing the location of a property in the frontmatter."
+  (start
+   nil
+   :documentation "The position of the start of the property's value.")
+  (end
+   nil
+   :documentation "The position of the end of the property's value.")
+  (value
+   nil
+   :documentation "The current value of the property."))
+
 (defun blogmore--get-frontmatter-property (property)
   "Get the value of PROPERTY from the frontmatter, or nil if it doesn't exist."
   (save-excursion
     (when-let ((location (blogmore--locate-frontmatter property)))
-      (nth 2 location))))
+      (blogmore--frontmatter-property-location-value location))))
 
 (defun blogmore--set-frontmatter-property (property value)
   "Set the value of PROPERTY in the frontmatter to VALUE."
   (save-excursion
     (if-let ((location (blogmore--locate-frontmatter property)))
         (progn
-          (goto-char (nth 0 location))
+          (goto-char (blogmore--frontmatter-property-location-start location))
           (unless (eolp)
             (kill-line))
           (insert (format " %s" value)))
