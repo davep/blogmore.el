@@ -340,14 +340,15 @@ frontmatter."
 
 (defun blogmore--get-all (property)
   "Get a list of all values for PROPERTY from existing posts."
-  (delete-dups
+  (seq-uniq
    (split-string
     (shell-command-to-string
      (format
       (if (executable-find "rg")
           "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
         "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
-      property (blogmore--posts-directory))) "\n" t)))
+      property (blogmore--posts-directory))) "\n" t)
+   #'string-equal-ignore-case))
 
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
@@ -362,14 +363,17 @@ frontmatter."
 
 (defun blogmore--current-tags ()
   "Get a list of tags from existing posts."
-  (sort
-   (delete-dups
+  (seq-uniq
+   ;; Sorting *before* making unique because I want to favour upper-case
+   ;; over lower-case in the resulting set.
+   (sort
     (flatten-list
      (mapcar
       (lambda (candidate)
         (when (string-match (rx bol "tags:" (* space) (group (* any)) eol) candidate)
           (split-string (match-string 1 candidate) "," t " ")))
-      (blogmore--get-all "tags"))))))
+      (blogmore--get-all "tags"))))
+   #'string-equal-ignore-case))
 
 (defun blogmore--post-picker ()
   "Pick a post from the list of existing posts."
