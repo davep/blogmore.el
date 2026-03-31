@@ -375,7 +375,7 @@ frontmatter."
 (defun blogmore--with (prompt existing-values)
   "Prompt the user with PROMPT and offer EXISTING-VALUES as completions."
   (if (blogmore--post-p)
-      (list (completing-read (format "%s from %s:" prompt (blogmore--blog-title)) existing-values))
+      (list (completing-read (format "%s from %s: " prompt (blogmore--blog-title)) existing-values))
     (error "This doesn't look like a blog post")))
 
 
