@@ -286,6 +286,11 @@ frontmatter."
         (goto-char (point-max))
         nil))))
 
+(defun blogmore--frontmatter-p (property)
+  "Return non-nil if PROPERTY exists in the frontmatter."
+  (save-excursion
+    (blogmore--locate-frontmatter property)))
+
 (cl-defstruct (blogmore--frontmatter-property-location (:type list))
   "A struct representing the location of a property in the frontmatter."
   (start
@@ -315,6 +320,23 @@ frontmatter."
           (insert (format " %s" value)))
       (beginning-of-line)
       (insert (format "%s: %s\n" property value)))))
+
+(defun blogmore--remove-frontmatter-property (property)
+  "Remove PROPERTY from the frontmatter."
+  (save-excursion
+    (when-let ((location (blogmore--locate-frontmatter property)))
+      (goto-char (blogmore--frontmatter-property-location-start location))
+      (delete-region (line-beginning-position) (line-end-position))
+      (kill-line))))
+
+(defun blogmore--toggle-frontmatter-property (property)
+  "Toggle the existence of PROPERTY in the frontmatter.
+
+If the property exists, it is removed. If it doesn't exist, it is added
+with a value of true."
+  (if (blogmore--frontmatter-p property)
+      (blogmore--remove-frontmatter-property property)
+    (blogmore--set-frontmatter-property property "true")))
 
 (defun blogmore--post-directory ()
   "Get the directory for the current year's blog posts."
@@ -388,11 +410,19 @@ frontmatter."
     (insert (format "[](%s)" link)))
   (forward-char))
 
+(defmacro blogmore--within-post (&rest body)
+  "Execute BODY within a blog post, or signal an error if we're not in a blog post."
+  `(if (blogmore--post-p)
+       (progn ,@body)
+     (error "This doesn't look like a blog post")))
+
 (defun blogmore--with (prompt existing-values)
   "Prompt the user with PROMPT and offer EXISTING-VALUES as completions."
-  (if (blogmore--post-p)
-      (list (completing-read (format "%s from %s: " prompt (blogmore--blog-title)) existing-values))
-    (error "This doesn't look like a blog post")))
+  (blogmore--within-post
+   (list
+    (completing-read
+     (format "%s from %s: " prompt (blogmore--blog-title))
+     existing-values))))
 
 
 ;; Commands:
@@ -420,6 +450,13 @@ frontmatter."
   "Edit FILE from my blog."
   (interactive (blogmore--post-picker))
   (find-file file))
+
+;;;###autoload
+(defun blogmore-toggle-draft ()
+  "Toggle the draft status of the post."
+  (interactive)
+  (blogmore--within-post
+   (blogmore--toggle-frontmatter-property "draft")))
 
 ;;;###autoload
 (defun blogmore-set-category (category)
