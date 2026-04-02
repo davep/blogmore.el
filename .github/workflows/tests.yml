@@ -1,0 +1,16 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: purcell/setup-emacs@v6
+        with:
+          version: '29.1'
+      - name: Run ERT tests
+        run: make test
+
+### tests.yml ends here
