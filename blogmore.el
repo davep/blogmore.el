@@ -321,15 +321,16 @@ frontmatter."
 
 (defun blogmore--set-frontmatter-property (property value)
   "Set the value of PROPERTY in the frontmatter to VALUE."
-  (save-excursion
-    (if-let ((location (blogmore--locate-frontmatter property)))
-        (progn
-          (goto-char (blogmore--frontmatter-property-location-start location))
-          (unless (eolp)
-            (kill-line))
-          (insert (format " %s" value)))
-      (beginning-of-line)
-      (insert (format "%s: %s\n" property value)))))
+  (blogmore--within-post
+   (save-excursion
+     (if-let ((location (blogmore--locate-frontmatter property)))
+         (progn
+           (goto-char (blogmore--frontmatter-property-location-start location))
+           (unless (eolp)
+             (kill-line))
+           (insert (format " %s" value)))
+       (beginning-of-line)
+       (insert (format "%s: %s\n" property value))))))
 
 (defun blogmore--remove-frontmatter-property (property)
   "Remove PROPERTY from the frontmatter."
