@@ -291,6 +291,16 @@ frontmatter."
   (save-excursion
     (blogmore--locate-frontmatter property)))
 
+(defun blogmore--post-p ()
+  "Does this buffer look like a blog post?"
+  (blogmore--frontmatter-bounds))
+
+(defmacro blogmore--within-post (&rest body)
+  "Execute BODY within a blog post, or signal an error if we're not in a blog post."
+  `(if (blogmore--post-p)
+       (progn ,@body)
+     (error "This doesn't look like a blog post")))
+
 (cl-defstruct (blogmore--frontmatter-property-location (:type list))
   "A struct representing the location of a property in the frontmatter."
   (start
@@ -311,15 +321,16 @@ frontmatter."
 
 (defun blogmore--set-frontmatter-property (property value)
   "Set the value of PROPERTY in the frontmatter to VALUE."
-  (save-excursion
-    (if-let ((location (blogmore--locate-frontmatter property)))
-        (progn
-          (goto-char (blogmore--frontmatter-property-location-start location))
-          (unless (eolp)
-            (kill-line))
-          (insert (format " %s" value)))
-      (beginning-of-line)
-      (insert (format "%s: %s\n" property value)))))
+  (blogmore--within-post
+   (save-excursion
+     (if-let ((location (blogmore--locate-frontmatter property)))
+         (progn
+           (goto-char (blogmore--frontmatter-property-location-start location))
+           (unless (eolp)
+             (kill-line))
+           (insert (format " %s" value)))
+       (beginning-of-line)
+       (insert (format "%s: %s\n" property value))))))
 
 (defun blogmore--remove-frontmatter-property (property)
   "Remove PROPERTY from the frontmatter."
@@ -359,10 +370,6 @@ if its value is not true, its value is set to true."
    (format-time-string "%Y-%m-%d")
    (blogmore--slug title)))
 
-(defun blogmore--post-p ()
-  "Does this buffer look like a blog post?"
-  (blogmore--frontmatter-bounds))
-
 (defun blogmore--get-all (property)
   "Get a list of all values for PROPERTY from existing posts."
   (seq-uniq
@@ -384,7 +391,8 @@ if its value is not true, its value is set to true."
      (lambda (candidate)
        (when (string-match (rx bol "category:" (* space) (group (* any)) eol) candidate)
          (string-trim (match-string 1 candidate))))
-     (blogmore--get-all "category")))))
+     (blogmore--get-all "category")))
+   #'string-lessp))
 
 (defun blogmore--current-tags ()
   "Get a list of tags from existing posts."
@@ -397,7 +405,8 @@ if its value is not true, its value is set to true."
       (lambda (candidate)
         (when (string-match (rx bol "tags:" (* space) (group (* any)) eol) candidate)
           (split-string (match-string 1 candidate) "," t " ")))
-      (blogmore--get-all "tags"))))
+      (blogmore--get-all "tags")))
+    #'string-lessp)
    #'string-equal-ignore-case))
 
 (defun blogmore--post-picker ()
@@ -412,12 +421,6 @@ if its value is not true, its value is set to true."
   (save-excursion
     (insert (format "[](%s)" link)))
   (forward-char))
-
-(defmacro blogmore--within-post (&rest body)
-  "Execute BODY within a blog post, or signal an error if we're not in a blog post."
-  `(if (blogmore--post-p)
-       (progn ,@body)
-     (error "This doesn't look like a blog post")))
 
 (defun blogmore--with (prompt existing-values)
   "Prompt the user with PROMPT and offer EXISTING-VALUES as completions."
@@ -480,7 +483,8 @@ if its value is not true, its value is set to true."
      (sort
       (append
        (string-split (or (blogmore--get-frontmatter-property "tags") "") "," t " ")
-       (list tag)))
+       (list tag))
+      #'string-lessp)
      #'string-equal-ignore-case) ", ")))
 
 ;;;###autoload
