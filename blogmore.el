@@ -198,7 +198,7 @@ argument is the date."
   "The current blog being worked on.")
 
 (defun blogmore--chosen-blog ()
-  "Get the details of the currently-chosen blog.."
+  "Get the details of the currently-chosen blog."
   (cond (blogmore--current-blog
          ;; The user has chosen a blog, so use that.
          blogmore--current-blog)
@@ -417,7 +417,7 @@ if its value is not true, its value is set to true."
     (directory-files-recursively (blogmore--posts-directory) (rx ".md" eol)))))
 
 (defun blogmore--insert-link (link)
-  "Insert Markdown to link to LINK.."
+  "Insert Markdown to link to LINK."
   (save-excursion
     (insert (format "[](%s)" link)))
   (forward-char))
