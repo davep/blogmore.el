@@ -20,7 +20,7 @@
      (let ((bounds (blogmore--frontmatter-bounds)))
        (should (consp bounds))
        (goto-char (car bounds))
-       (should (looking-at "\nTitle"))
+       (should (looking-at "Title"))
        (goto-char (cdr bounds))
        (should (looking-at "---"))))
    (with-temp-buffer

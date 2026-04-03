@@ -261,7 +261,7 @@ frontmatter is found, return nil."
   (save-excursion
     (goto-char (point-min))
     (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
-      (let ((start (match-end 0)))
+      (let ((start (1+ (match-end 0))))
         (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
           (cons start (match-beginning 0)))))))
 
