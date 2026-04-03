@@ -536,10 +536,10 @@ if its value is not true, its value is set to true."
    ["Post"
     ("n" "New post" blogmore-new)
     ("e" "Edit post" blogmore-edit)
-    ("d" "Toggle draft status" blogmore-toggle-draft )
-    ("c" "Set post category" blogmore-set-category )
+    ("d" "Toggle draft status" blogmore-toggle-draft)
+    ("c" "Set post category" blogmore-set-category)
     ("t" "Add tag" blogmore-add-tag)
-    ("u d" "Update date" blogmore-update-date )
+    ("u d" "Update date" blogmore-update-date)
     ("u m" "Update modified date" blogmore-update-modified)]
    ["Links"
     ("l c" "Link to a category" blogmore-link-category)
