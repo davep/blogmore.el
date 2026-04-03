@@ -208,11 +208,11 @@ argument is the date."
         (blogmore-blogs
          ;; There are multiple blogs defined, so we can't work out the best
          ;; option.
-         (error "Please select a blog to work on first; see `blogmore-work-on'"))
+         (user-error "Please select a blog to work on first; see `blogmore-work-on'"))
         (t
          ;; There are no blogs defined, so we can't work out the best
          ;; option.
-         (error "No blogs defined; please add one to `blogmore-blogs'"))))
+         (user-error "No blogs defined; please add one to `blogmore-blogs'"))))
 
 (defun blogmore--blog-title ()
   "Get the title of the current blog."
@@ -299,7 +299,7 @@ frontmatter."
   "Execute BODY within a blog post, or signal an error if we're not in a blog post."
   `(if (blogmore--post-p)
        (progn ,@body)
-     (error "This doesn't look like a blog post")))
+     (user-error "This doesn't look like a blog post")))
 
 (cl-defstruct (blogmore--frontmatter-property-location (:type list))
   "A struct representing the location of a property in the frontmatter."
