@@ -296,6 +296,10 @@ frontmatter."
   "Return non-nil if the current buffer looks like a blog post."
   (blogmore--frontmatter-bounds))
 
+(defun blogmore--blog-post-p ()
+  "Return non-nil if a blog is selected and the buffer looks like a post."
+  (and blogmore--current-blog (blogmore--post-p)))
+
 (defmacro blogmore--within-post (&rest body)
   "Execute BODY within a blog post, or signal an error if we're not in a blog post."
   `(if (blogmore--post-p)
@@ -545,15 +549,15 @@ if its value is not true, its value is set to true."
    ["Post"
     ("n" "New post" blogmore-new :inapt-if-nil blogmore--current-blog)
     ("e" "Edit post" blogmore-edit :inapt-if-nil blogmore--current-blog)
-    ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--post-p)
-    ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--post-p)
-    ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--post-p)
-    ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--post-p)
-    ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--post-p)]
+    ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--blog-post-p)
+    ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--blog-post-p)
+    ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
+    ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
+    ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)]
    ["Links"
-    ("l c" "Link to a category" blogmore-link-category :inapt-if-not blogmore--post-p)
-    ("l p" "Link to a post" blogmore-link-post :inapt-if-not blogmore--post-p)
-    ("l t" "Link to a tag" blogmore-link-tag :inapt-if-not blogmore--post-p)]])
+    ("l c" "Link to a category" blogmore-link-category :inapt-if-not blogmore--blog-post-p)
+    ("l p" "Link to a post" blogmore-link-post :inapt-if-not blogmore--blog-post-p)
+    ("l t" "Link to a tag" blogmore-link-tag :inapt-if-not blogmore--blog-post-p)]])
 
 (provide 'blogmore)
 
