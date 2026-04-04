@@ -325,11 +325,14 @@ frontmatter."
     (blogmore--locate-frontmatter property)))
 
 (defun blogmore--post-p ()
-  "Return non-nil if the current buffer looks like a blog post."
+  "Return non-nil if the current buffer appears to be a blog post.
+
+This is determined by checking for the presence of frontmatter at the
+start of the buffer."
   (blogmore--frontmatter-bounds))
 
 (defun blogmore--blog-post-p ()
-  "Return non-nil if a blog is selected and the buffer looks like a post."
+  "Return non-nil if a blog is selected we are visiting a blog post."
   (and (blogmore--chosen-blog-sans-error) (blogmore--post-p)))
 
 (defmacro blogmore--within-post (&rest body)
