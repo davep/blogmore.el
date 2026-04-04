@@ -535,7 +535,13 @@ if its value is not true, its value is set to true."
 ;;;###autoload
 (transient-define-prefix blogmore ()
   "Show a transient for BlogMore commands."
-  [["Blog"
+  [:description
+   (lambda ()
+     (format "BlogMore: %s\n"
+             (if blogmore--current-blog
+                 (blogmore--blog-title)
+               "No blog selected")))
+   ["Blog"
     ("b"  "Select blog" blogmore-work-on)]
    ["Post"
     ("n" "New post" blogmore-new)
