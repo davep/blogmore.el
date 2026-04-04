@@ -198,22 +198,33 @@ argument is the date."
 (defvar blogmore--current-blog nil
   "The current blog being worked on.")
 
-(defun blogmore--chosen-blog ()
-  "Get the details of the currently-chosen blog."
+(defun blogmore--chosen-blog-sans-error ()
+  "Get the details of the currently-chosen blog, or nil.
+
+This function is similar to `blogmore--chosen-blog', but returns nil
+instead of signalling an error if no blog is chosen or if there are
+multiple blogs defined."
   (cond (blogmore--current-blog
          ;; The user has chosen a blog, so use that.
          blogmore--current-blog)
         ((= (length blogmore-blogs) 1)
          ;; There's only one blog defined, so use that.
          (car blogmore-blogs))
-        (blogmore-blogs
-         ;; There are multiple blogs defined, so we can't work out the best
-         ;; option.
-         (user-error "Please select a blog to work on first; see `blogmore-work-on'"))
         (t
-         ;; There are no blogs defined, so we can't work out the best
-         ;; option.
-         (user-error "No blogs defined; please add one to `blogmore-blogs'"))))
+         ;; There are either no blogs defined or multiple blogs defined, so
+         ;; we can't work out the best option.
+         nil)))
+
+(defun blogmore--chosen-blog ()
+  "Get the details of the currently-chosen blog.
+
+If the current blog can't be determined, signal an error asking the user
+to select a blog to work on first."
+  (if-let ((blog (blogmore--chosen-blog-sans-error)))
+      blog
+    (if blogmore-blogs
+        (user-error "Please select a blog to work on first; see `blogmore-work-on'")
+      (user-error "No blogs defined; please add one to `blogmore-blogs'"))))
 
 (defun blogmore--blog-title ()
   "Get the title of the current blog."
@@ -298,7 +309,7 @@ frontmatter."
 
 (defun blogmore--blog-post-p ()
   "Return non-nil if a blog is selected and the buffer looks like a post."
-  (and blogmore--current-blog (blogmore--post-p)))
+  (and (blogmore--chosen-blog-sans-error) (blogmore--post-p)))
 
 (defmacro blogmore--within-post (&rest body)
   "Execute BODY within a blog post, or signal an error if we're not in a blog post."
@@ -541,14 +552,14 @@ if its value is not true, its value is set to true."
   [:description
    (lambda ()
      (format "BlogMore: %s\n"
-             (if blogmore--current-blog
+             (if (blogmore--chosen-blog-sans-error)
                  (blogmore--blog-title)
                "No blog selected")))
    ["Blog"
     ("b"  "Select blog" blogmore-work-on)]
    ["Post"
-    ("n" "New post" blogmore-new :inapt-if-nil blogmore--current-blog)
-    ("e" "Edit post" blogmore-edit :inapt-if-nil blogmore--current-blog)
+    ("n" "New post" blogmore-new :inapt-if-not blogmore--chosen-blog-sans-error)
+    ("e" "Edit post" blogmore-edit :inapt-if-not blogmore--chosen-blog-sans-error)
     ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--blog-post-p)
     ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--blog-post-p)
     ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
