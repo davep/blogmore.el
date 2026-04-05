@@ -62,6 +62,13 @@
     :custom (choice (const :tag "Default") function)
     :label "Post Subdirectory Function"
     :documentation "A function for generating a subdirectory for a new post")
+   (post-file-name-from-title-function
+    :initarg :post-file-name-from-title-function
+    :initform nil
+    :type (or null function)
+    :custom (choice (const :tag "Default") function)
+    :label "Post File Name From Title Function"
+    :documentation "A function for generating a filename for a new post from its title")
    (post-template
     :initarg :post-template
     :initform nil
@@ -164,6 +171,15 @@ a new blog post."
   :type 'function
   :group 'blogmore)
 
+(defcustom blogmore-default-post-file-name-from-title-function
+  (lambda (title)
+    (format "%s-%s.md"
+            (format-time-string "%Y-%m-%d")
+            (blogmore--slug title)))
+  "Default function to generate a filename for a new blog post from its title."
+  :type 'function
+  :group 'blogmore)
+
 (defcustom blogmore-default-category-maker-function #'blogmore--slug
   "Default function to generate a slug for a category."
   :type 'function
@@ -237,6 +253,7 @@ to select a blog to work on first."
 (blogmore--setting posts-directory)
 (blogmore--setting post-template)
 (blogmore--setting post-subdirectory-function)
+(blogmore--setting post-file-name-from-title-function)
 (blogmore--setting post-maker-function)
 (blogmore--setting category-maker-function)
 (blogmore--setting tag-maker-function)
@@ -382,10 +399,9 @@ if its value is not true, its value is set to true."
 (defun blogmore--file-from-title (title)
   "Generate a filename for a blog post from the given TITLE."
   (format
-   "%s%s-%s.md"
+   "%s%s"
    (file-name-as-directory (blogmore--post-directory))
-   (format-time-string "%Y-%m-%d")
-   (blogmore--slug title)))
+   (funcall (blogmore--post-file-name-from-title-function) title)))
 
 (defun blogmore--get-all (property)
   "Get a list of all values for PROPERTY from existing posts."

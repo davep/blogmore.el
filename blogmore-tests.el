@@ -124,16 +124,28 @@
 
 (ert-deftest blogmore--file-from-title-test ()
   "Test filename generation from post titles."
-  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/"))
-        (post-dir (format-time-string "%Y/%m/%d"))
-        (today (format-time-string "%Y-%m-%d")))
-    (dolist (case blogmore--test-titles)
-      (should (string-match
-               (format "/tmp/%s/%s-%s.md"
-                       post-dir
-                       today
-                       (cdr case))
-               (blogmore--file-from-title (car case)))))))
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
+    ;; Default filename generation.
+    (let ((post-dir (format-time-string "%Y/%m/%d"))
+          (today (format-time-string "%Y-%m-%d")))
+      (dolist (case blogmore--test-titles)
+        (should (string-match
+                 (format "/tmp/%s/%s-%s.md"
+                         post-dir
+                         today
+                         (cdr case))
+                 (blogmore--file-from-title (car case))))))
+    ;; Custom default filename generation.
+    (let ((blogmore-default-post-file-name-from-title-function
+           (lambda (title)
+             (format "%s.md" (blogmore--slug title))))
+          (post-dir (format-time-string "%Y/%m/%d")))
+      (dolist (case blogmore--test-titles)
+        (should (string-match
+                 (format "/tmp/%s/%s.md"
+                         post-dir
+                         (cdr case))
+                 (blogmore--file-from-title (car case))))))))
 
 (ert-deftest blogmore--current-categories-test ()
   "Test extraction of categories from post content."
