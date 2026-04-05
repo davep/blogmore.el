@@ -36,6 +36,7 @@
   (require 'cl-lib)
   (require 'subr-x))
 (require 'eieio-custom)
+(require 'parse-time)
 (require 'transient)
 
 
@@ -153,9 +154,14 @@ argument is the date."
 
 (defcustom blogmore-default-post-maker-function
   (lambda (file)
-    (replace-regexp-in-string
-     (rx bos (group (+ digit)) "-" (group (+ digit)) "-" (group (+ digit)) "-")
-     "\\1/\\2/\\3/"
+    (format
+     "%s/%s"
+     (format-time-string
+      "%Y/%m/%d"
+      (with-temp-buffer
+        (insert-file-contents-literally file)
+        (parse-iso8601-time-string
+         (string-replace " " "T" (blogmore--get-frontmatter-property "date")))))
      (file-name-base (file-name-sans-extension file))))
   "Default function to generate a link for a blog post from its filename."
   :type 'function
