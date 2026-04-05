@@ -161,8 +161,11 @@ argument is the date."
       (with-temp-buffer
         (insert-file-contents-literally file)
         (parse-iso8601-time-string
-         (string-replace " " "T" (blogmore--get-frontmatter-property "date")))))
-     (file-name-base (file-name-sans-extension file))))
+         (blogmore--clean-time-string (blogmore--get-frontmatter-property "date")))))
+     (replace-regexp-in-string
+      (rx bol (= 4 digit) "-" (= 2 digit) "-" (= 2 digit) "-")
+      ""
+      (file-name-base file))))
   "Default function to generate a link for a blog post from its filename."
   :type 'function
   :group 'blogmore)
@@ -216,6 +219,17 @@ a new blog post."
 
 (defvar blogmore--current-blog nil
   "The current blog being worked on.")
+
+(defun blogmore--clean-time-string (time-string)
+  "Clean TIME-STRING to the format YYYY-MM-DDTHH:MM:SS+NNNN."
+  (replace-regexp-in-string
+   (rx (group (= 4 digit) "-" (= 2 digit) "-" (= 2 digit))
+       (1+ (any " T"))
+       (group (= 2 digit) ":" (= 2 digit) ":" (= 2 digit))
+       (0+ space)
+       (group (any "+-") (= 4 digit)))
+   "\\1T\\2\\3"
+   time-string))
 
 (defun blogmore--chosen-blog-sans-error ()
   "Get the details of the currently-chosen blog, or nil.
