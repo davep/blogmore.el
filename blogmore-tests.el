@@ -63,17 +63,18 @@
 
 (ert-deftest blogmore--set-frontmatter-property-test ()
    "Test setting frontmatter properties."
-   (with-temp-buffer
-     (insert "---\ntitle: Old Title\n---\n\nContent")
-     (goto-char (point-min))
-     (blogmore--set-frontmatter-property "title" "New Title")
-     (should (equal (blogmore--get-frontmatter-property "title") "New Title"))
-     (blogmore--set-frontmatter-property "category" "Tech")
-     (should (equal (blogmore--get-frontmatter-property "category") "Tech")))
-   (with-temp-buffer
-     (insert "No frontmatter here")
-     (goto-char (point-min))
-     (should-error (blogmore--set-frontmatter-property "title" "New Title") :type 'user-error)))
+   (let ((blogmore--current-blog (make-blogmore--blog :posts-directory "/tmp/")))
+     (with-temp-buffer
+       (insert "---\ntitle: Old Title\n---\n\nContent")
+       (goto-char (point-min))
+       (blogmore--set-frontmatter-property "title" "New Title")
+       (should (equal (blogmore--get-frontmatter-property "title") "New Title"))
+       (blogmore--set-frontmatter-property "category" "Tech")
+       (should (equal (blogmore--get-frontmatter-property "category") "Tech")))
+     (with-temp-buffer
+       (insert "No frontmatter here")
+       (goto-char (point-min))
+       (should-error (blogmore--set-frontmatter-property "title" "New Title") :type 'user-error))))
 
 (ert-deftest blogmore--post-p-test ()
   "Test detection of blog post frontmatter."
@@ -113,12 +114,13 @@
 
 (ert-deftest blogmore--within-post-test ()
    "Test blogmore--within-post macro behavior."
-   (with-temp-buffer
-     (insert "---\ntitle: Test\n---\n\nContent")
-     (should (blogmore--within-post t)))
-   (with-temp-buffer
-     (insert "No frontmatter here")
-     (should-error (blogmore--within-post t) :type 'user-error)))
+  (let ((blogmore--current-blog (make-blogmore--blog :posts-directory "/tmp/")))
+    (with-temp-buffer
+      (insert "---\ntitle: Test\n---\n\nContent")
+      (should (blogmore--within-post t)))
+    (with-temp-buffer
+      (insert "No frontmatter here")
+      (should-error (blogmore--within-post t) :type 'user-error))))
 
 (ert-deftest blogmore--file-from-title-test ()
   "Test filename generation from post titles."

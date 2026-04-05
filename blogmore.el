@@ -337,7 +337,7 @@ start of the buffer."
 
 (defmacro blogmore--within-post (&rest body)
   "Execute BODY within a blog post, or signal an error if we're not in a blog post."
-  `(if (blogmore--post-p)
+  `(if (blogmore--blog-post-p)
        (progn ,@body)
      (user-error "This doesn't look like a blog post")))
 
