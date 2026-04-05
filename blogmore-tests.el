@@ -63,7 +63,7 @@
 
 (ert-deftest blogmore--set-frontmatter-property-test ()
    "Test setting frontmatter properties."
-   (let ((blogmore--current-blog (make-blogmore--blog :posts-directory "/tmp/")))
+   (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
      (with-temp-buffer
        (insert "---\ntitle: Old Title\n---\n\nContent")
        (goto-char (point-min))
@@ -89,7 +89,7 @@
 
 (ert-deftest blogmore--blog-post-p-test ()
   "Test blogmore--blog-post-p returns correct values."
-  (let ((blogmore--current-blog (make-blogmore--blog :posts-directory "/tmp/")))
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
     (with-temp-buffer
       (insert "---\ntitle: Test\n---\n\nContent")
       (goto-char (point-min))
@@ -99,7 +99,7 @@
       (insert "---\ntitle: Test\n---\n\nContent")
       (goto-char (point-min))
       (should-not (blogmore--blog-post-p))))
-  (let ((blogmore--current-blog (make-blogmore--blog :posts-directory "/tmp/")))
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
     (with-temp-buffer
       (insert "No frontmatter here")
       (goto-char (point-min))
@@ -114,7 +114,7 @@
 
 (ert-deftest blogmore--within-post-test ()
    "Test blogmore--within-post macro behavior."
-  (let ((blogmore--current-blog (make-blogmore--blog :posts-directory "/tmp/")))
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
     (with-temp-buffer
       (insert "---\ntitle: Test\n---\n\nContent")
       (should (blogmore--within-post t)))
@@ -124,7 +124,7 @@
 
 (ert-deftest blogmore--file-from-title-test ()
   "Test filename generation from post titles."
-  (let ((blogmore--current-blog (make-blogmore--blog :posts-directory "/tmp/"))
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/"))
         (post-dir (format-time-string "%Y/%m/%d"))
         (today (format-time-string "%Y-%m-%d")))
     (dolist (case blogmore--test-titles)
