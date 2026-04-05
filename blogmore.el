@@ -396,7 +396,7 @@ if its value is not true, its value is set to true."
       (if (executable-find "rg")
           "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
         "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
-      property (blogmore--posts-directory))) "\n" t)
+      property (expand-file-name (blogmore--posts-directory)))) "\n" t)
    #'string-equal-ignore-case))
 
 (defun blogmore--current-categories ()
