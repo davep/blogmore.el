@@ -122,6 +122,27 @@
   :documentation "A class representing the settings for a single blog.")
 
 
+;; Public utility macros and functions.
+
+(defmacro blogmore-with-post (post-file &rest body)
+  "Execute BODY with POST-FILE as the current buffer."
+  (declare (indent 1))
+  `(with-temp-buffer
+     (insert-file-contents ,post-file)
+      ,@body))
+
+(defun blogmore-clean-time-string (time-string)
+  "Clean TIME-STRING to the format YYYY-MM-DDTHH:MM:SS+NNNN."
+  (replace-regexp-in-string
+   (rx (group (= 4 digit) "-" (= 2 digit) "-" (= 2 digit))
+       (1+ (any " T"))
+       (group (= 2 digit) ":" (= 2 digit) ":" (= 2 digit))
+       (0+ space)
+       (group (any "+-") (= 4 digit)))
+   "\\1T\\2\\3"
+   time-string))
+
+
 ;; Configuration:
 
 (defgroup blogmore ()
@@ -158,10 +179,9 @@ argument is the date."
      "%s/%s"
      (format-time-string
       "%Y/%m/%d"
-      (with-temp-buffer
-        (insert-file-contents-literally file)
+      (blogmore-with-post file
         (parse-iso8601-time-string
-         (blogmore--clean-time-string (blogmore--get-frontmatter-property "date")))))
+         (blogmore-clean-time-string (blogmore--get-frontmatter-property "date")))))
      (replace-regexp-in-string
       (rx bol (= 4 digit) "-" (= 2 digit) "-" (= 2 digit) "-")
       ""
@@ -219,17 +239,6 @@ a new blog post."
 
 (defvar blogmore--current-blog nil
   "The current blog being worked on.")
-
-(defun blogmore--clean-time-string (time-string)
-  "Clean TIME-STRING to the format YYYY-MM-DDTHH:MM:SS+NNNN."
-  (replace-regexp-in-string
-   (rx (group (= 4 digit) "-" (= 2 digit) "-" (= 2 digit))
-       (1+ (any " T"))
-       (group (= 2 digit) ":" (= 2 digit) ":" (= 2 digit))
-       (0+ space)
-       (group (any "+-") (= 4 digit)))
-   "\\1T\\2\\3"
-   time-string))
 
 (defun blogmore--chosen-blog-sans-error ()
   "Get the details of the currently-chosen blog, or nil.
