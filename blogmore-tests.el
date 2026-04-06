@@ -70,7 +70,9 @@
        (should (blogmore-set-frontmatter "title" "New Title"))
        (should (equal (blogmore-get-frontmatter "title") "New Title"))
        (should (blogmore-set-frontmatter "category" "Tech"))
-       (should (equal (blogmore-get-frontmatter "category") "Tech")))
+       (should (equal (blogmore-get-frontmatter "category") "Tech"))
+       (should (blogmore-set-frontmatter "empty" ""))
+       (should (equal (blogmore-get-frontmatter "empty") "")))
      (with-temp-buffer
        (insert "No frontmatter here")
        (should-not (blogmore-set-frontmatter "title" "New Title")))))

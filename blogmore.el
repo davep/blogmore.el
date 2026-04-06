@@ -231,8 +231,7 @@ function returns t."
       (if-let ((location (blogmore--locate-frontmatter property)))
           (progn
             (goto-char (blogmore--frontmatter-property-location-start location))
-            (unless (eolp)
-              (kill-line))
+            (kill-region (point) (line-end-position))
             (insert (format " %s" value)))
         (beginning-of-line)
         (insert (format "%s: %s\n" property value)))
