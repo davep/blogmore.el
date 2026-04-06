@@ -579,7 +579,10 @@ to select a blog to work on first."
        (string-split (or (blogmore-get-frontmatter "tags") "") "," t " ")
        (list tag))
       #'string-lessp)
-     #'string-equal-ignore-case) ", ")))
+     #'string-equal-ignore-case) ", "))
+  (message "Added tag '%s'" tag)
+  (when transient-current-prefix
+    (call-interactively #'blogmore-add-tag)))
 
 ;;;###autoload
 (defun blogmore-update-date ()
