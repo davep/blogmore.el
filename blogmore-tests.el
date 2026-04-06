@@ -47,7 +47,7 @@
    (with-temp-buffer
      (insert "---\ntitle: Test\n---\n\nContent")
      (should (blogmore--frontmatter-p "title"))
-     (should (not (blogmore--frontmatter-p "category"))))
+     (should-not (blogmore--frontmatter-p "category")))
    (with-temp-buffer
      (insert "No frontmatter here")
      (should-not (blogmore--frontmatter-p "title"))))
