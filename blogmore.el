@@ -564,6 +564,11 @@ to select a blog to work on first."
   (interactive (blogmore--with "Category" (blogmore--current-categories)))
   (blogmore-set-frontmatter "category" category))
 
+(defun blogmore--post-tags ()
+  "Get the tags for the current post as a list."
+  (when-let ((tags (blogmore-get-frontmatter "tags")))
+    (string-split tags "," t " ")))
+
 ;;;###autoload
 (defun blogmore-add-tag (tag)
   "Add TAG to the post's tags."
@@ -574,15 +579,24 @@ to select a blog to work on first."
     (seq-uniq
      ;; Sorting *before* making unique because I want to favour upper-case
      ;; over lower-case in the resulting list of tags.
-     (sort
-      (append
-       (string-split (or (blogmore-get-frontmatter "tags") "") "," t " ")
-       (list tag))
-      #'string-lessp)
-     #'string-equal-ignore-case) ", "))
+     (sort (append (blogmore--post-tags) (list tag)) #'string-lessp)
+     #'string-equal-ignore-case)
+    ", "))
   (message "Added tag '%s'" tag)
   (when transient-current-prefix
     (call-interactively #'blogmore-add-tag)))
+
+;;;###autoload
+(defun blogmore-remove-tag (tag)
+  "Remove TAG from the post's tags."
+  (interactive
+   (list (when-let (tags (blogmore--post-tags))
+           (completing-read "Tag to remove: " tags nil t))))
+  (when tag
+    (blogmore-set-frontmatter "tags" (string-join (remove tag (blogmore--post-tags)) ", "))
+    (message "Removed tag '%s'" tag)
+    (when transient-current-prefix
+      (call-interactively #'blogmore-remove-tag))))
 
 ;;;###autoload
 (defun blogmore-update-date ()
@@ -641,6 +655,7 @@ to select a blog to work on first."
     ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--blog-post-p)
     ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--blog-post-p)
     ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
+    ("T" "Remove tag" blogmore-remove-tag :inapt-if-not blogmore--blog-post-p)
     ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
     ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)]
    ["Links"
