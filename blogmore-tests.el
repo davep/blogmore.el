@@ -8,10 +8,10 @@
     ("Emacs & Lisp" . "emacs-lisp")
     ("2026: A Blog Odyssey" . "2026-a-blog-odyssey")))
 
-(ert-deftest blogmore--slug-test ()
-  "Test that blogmore--slug produces expected slugs."
+(ert-deftest blogmore-slug-test ()
+  "Test that blogmore-slug produces expected slugs."
   (dolist (case blogmore--test-titles)
-    (should (equal (blogmore--slug (car case)) (cdr case)))))
+    (should (equal (blogmore-slug (car case)) (cdr case)))))
 
 (ert-deftest blogmore--frontmatter-bounds-test ()
    "Test detection of frontmatter bounds."
@@ -138,7 +138,7 @@
     ;; Custom default filename generation.
     (let ((blogmore-default-post-file-name-from-title-function
            (lambda (title)
-             (format "%s.md" (blogmore--slug title))))
+             (format "%s.md" (blogmore-slug title))))
           (post-dir (format-time-string "%Y/%m/%d")))
       (dolist (case blogmore--test-titles)
         (should (string-match

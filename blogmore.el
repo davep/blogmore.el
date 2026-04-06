@@ -148,6 +148,14 @@ that can be parsed."
    "\\1T\\2\\3"
    time-string))
 
+(defun blogmore-slug (title)
+  "Generate a slug from the given TITLE."
+  (thread-last
+    title
+    downcase
+    (replace-regexp-in-string (rx (+ (not (any "0-9a-z")))) "-")
+    (replace-regexp-in-string (rx (or (seq bol "-") (seq "-" eol))) "")))
+
 
 ;; Configuration:
 
@@ -210,17 +218,17 @@ a new blog post."
   (lambda (title)
     (format "%s-%s.md"
             (format-time-string "%Y-%m-%d")
-            (blogmore--slug title)))
+            (blogmore-slug title)))
   "Default function to generate a filename for a new blog post from its title."
   :type 'function
   :group 'blogmore)
 
-(defcustom blogmore-default-category-maker-function #'blogmore--slug
+(defcustom blogmore-default-category-maker-function #'blogmore-slug
   "Default function to generate a slug for a category."
   :type 'function
   :group 'blogmore)
 
-(defcustom blogmore-default-tag-maker-function #'blogmore--slug
+(defcustom blogmore-default-tag-maker-function #'blogmore-slug
   "Default function to generate a slug for a tag."
   :type 'function
   :group 'blogmore)
@@ -298,14 +306,6 @@ to select a blog to work on first."
 
 (defconst blogmore--frontmatter-marker-regexp (rx bol "---" eol)
   "Regular expression to match the frontmatter marker in blog posts.")
-
-(defun blogmore--slug (title)
-  "Generate a slug from the given TITLE."
-  (thread-last
-    title
-    downcase
-    (replace-regexp-in-string (rx (+ (not (any "0-9a-z")))) "-")
-    (replace-regexp-in-string (rx (or (seq bol "-") (seq "-" eol))) "")))
 
 (defun blogmore--now ()
   "Return the current date and time as a string."
