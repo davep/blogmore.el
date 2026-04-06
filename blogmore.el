@@ -275,7 +275,17 @@ returns t."
 (defgroup blogmore ()
   "Tools for working with my personal blog."
   :group 'convenience
-  :prefix "blogmore-")
+  :prefix "blogmore-"
+  :link
+  '(url-link
+    :tag
+    "blogmore.el on GitHub"
+    "https://github.com/davep/blogmore.el")
+  :link
+  '(url-link
+    :tag
+    "BlogMore static site generator"
+    "https://blogmore.davep.dev/"))
 
 (defcustom blogmore-blogs nil
   "A list of blogs to work with."
