@@ -32,6 +32,8 @@
 ;; to allow it to be used with a wide variety of different setups.
 
 
+;;; Code:
+
 (eval-when-compile
   (require 'cl-lib)
   (require 'subr-x))
@@ -122,6 +124,62 @@
   :documentation "A class representing the settings for a single blog.")
 
 
+;; Frontmatter internals.
+
+(defconst blogmore--frontmatter-marker-regexp (rx bol "---" eol)
+  "Regular expression to match the frontmatter marker in blog posts.")
+
+(defun blogmore--frontmatter-bounds ()
+  "Return the bounds of the frontmatter as a cons cell (START . END).
+
+START is the position immediately after the first frontmatter marker,
+and END is the position of the second frontmatter marker. If no
+frontmatter is found, return nil."
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
+      (let ((start (1+ (match-end 0))))
+        (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
+          (cons start (match-beginning 0)))))))
+
+(cl-defstruct blogmore--frontmatter-property-location
+  "A struct representing the location of a property in the frontmatter."
+  (start nil :documentation "The position of the start of the property's value.")
+  (end nil :documentation "The position of the end of the property's value.")
+  (value nil :documentation "The current value of the property."))
+
+(defun blogmore--locate-frontmatter (property)
+  "Locate the line for PROPERTY in the frontmatter.
+
+If the property is found, return an instance of
+`blogmore--frontmatter-property-location' with the start, end, and value
+of the property. If the property is not found, return nil.
+
+If the property is found `point' is left at the beginning of the value.
+If the property is not found, `point' is left at the end of the
+frontmatter.
+
+If there are no frontmatter markers, return nil and leave `point`
+unchanged."
+  (when-let ((bounds (blogmore--frontmatter-bounds)))
+    (with-restriction (car bounds) (cdr bounds)
+      (goto-char (point-min))
+      (if (re-search-forward (rx bol (literal property) ":") nil t)
+          (make-blogmore--frontmatter-property-location
+           :start (point)
+           :end (line-end-position)
+           :value (string-trim
+                   (buffer-substring-no-properties
+                    (point)
+                    (line-end-position))))
+        (ignore (goto-char (point-max)))))))
+
+(defun blogmore--frontmatter-p (property)
+  "Return non-nil if PROPERTY exists in the frontmatter."
+  (save-excursion
+    (blogmore--locate-frontmatter property)))
+
+
 ;; Public utility macros and functions.
 
 (defmacro blogmore-with-post (post-file &rest body)
@@ -155,6 +213,61 @@ that can be parsed."
     downcase
     (replace-regexp-in-string (rx (+ (not (any "0-9a-z")))) "-")
     (replace-regexp-in-string (rx (or (seq bol "-") (seq "-" eol))) "")))
+
+(defun blogmore-get-frontmatter (property)
+  "Get the value of PROPERTY from the frontmatter, or nil if it doesn't exist."
+  (save-excursion
+    (when-let ((location (blogmore--locate-frontmatter property)))
+      (blogmore--frontmatter-property-location-value location))))
+
+(defun blogmore-set-frontmatter (property value)
+  "Set the value of PROPERTY in the frontmatter to VALUE.
+
+If a frontmatter section can't be found in the current buffer, the
+function returns nil, otherwise PROPERTY is set to VALUE and the
+function returns t."
+  (when (blogmore--frontmatter-bounds)
+    (save-excursion
+      (if-let ((location (blogmore--locate-frontmatter property)))
+          (progn
+            (goto-char (blogmore--frontmatter-property-location-start location))
+            (unless (eolp)
+              (kill-line))
+            (insert (format " %s" value)))
+        (beginning-of-line)
+        (insert (format "%s: %s\n" property value)))
+      t)))
+
+(defun blogmore-remove-frontmatter (property)
+  "Remove PROPERTY from the frontmatter.
+
+If a frontmatter section can't be found in the current buffer, the
+function returns nil, otherwise PROPERTY is removed and the function
+returns t. In the event that PROPERTY is not found, the function returns
+t and the buffer is left unchanged."
+  (when (blogmore--frontmatter-bounds)
+    (save-excursion
+      (when-let ((location (blogmore--locate-frontmatter property)))
+        (goto-char (blogmore--frontmatter-property-location-start location))
+        (delete-region (line-beginning-position) (line-end-position))
+        (kill-line)))
+    t))
+
+(defun blogmore-toggle-frontmatter (property)
+  "Toggle the existence of boolean PROPERTY in the frontmatter.
+
+If the property doesn't exist, it is added with a value of true. If it
+does exist and if its value is true, it is removed. If it does exist and
+if its value is not true, its value is set to true.
+
+If a frontmatter section can't be found in the current buffer, the
+function returns nil, otherwise the property is toggled and the function
+returns t."
+  (if (and
+       (blogmore--frontmatter-p property)
+       (string-equal-ignore-case (blogmore-get-frontmatter property) "true"))
+      (blogmore-remove-frontmatter property)
+    (blogmore-set-frontmatter property "true")))
 
 
 ;; Configuration:
@@ -195,7 +308,7 @@ argument is the date."
       "%Y/%m/%d"
       (blogmore-with-post file
         (parse-iso8601-time-string
-         (blogmore-clean-time-string (blogmore--get-frontmatter-property "date")))))
+         (blogmore-clean-time-string (blogmore-get-frontmatter "date")))))
      (replace-regexp-in-string
       (rx bol (= 4 digit) "-" (= 2 digit) "-" (= 2 digit) "-")
       ""
@@ -249,10 +362,16 @@ a new blog post."
   :group 'blogmore)
 
 
-;;; Code:
+;; Command support code:
 
 (defvar blogmore--current-blog nil
   "The current blog being worked on.")
+
+(defmacro blogmore--within-post (&rest body)
+  "Execute BODY within a blog post, or signal an error if we're not in a blog post."
+  `(if (blogmore--blog-post-p)
+       (progn ,@body)
+     (user-error "This doesn't look like a blog post")))
 
 (defun blogmore--chosen-blog-sans-error ()
   "Get the details of the currently-chosen blog, or nil.
@@ -304,119 +423,13 @@ to select a blog to work on first."
 (blogmore--setting category-link-format)
 (blogmore--setting tag-link-format)
 
-(defconst blogmore--frontmatter-marker-regexp (rx bol "---" eol)
-  "Regular expression to match the frontmatter marker in blog posts.")
-
 (defun blogmore--now ()
   "Return the current date and time as a string."
   (format-time-string "%Y-%m-%d %H:%M:%S%z"))
 
-(defun blogmore--frontmatter-bounds ()
-  "Return the bounds of the frontmatter as a cons cell (START . END).
-
-START is the position immediately after the first frontmatter marker,
-and END is the position of the second frontmatter marker. If no
-frontmatter is found, return nil."
-  (save-excursion
-    (goto-char (point-min))
-    (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
-      (let ((start (1+ (match-end 0))))
-        (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
-          (cons start (match-beginning 0)))))))
-
-(defun blogmore--locate-frontmatter (property)
-  "Locate the line for PROPERTY in the frontmatter.
-
-If the property is found, return a list of the form (START END VALUE),
-where START and END are the bounds of the value and VALUE is the current
-value of the property. If the property is not found, return nil.
-
-If the property is found `point' is left at the beginning of the value.
-If the property is not found, `point' is left at the end of the
-frontmatter."
-  (when-let ((bounds (blogmore--frontmatter-bounds)))
-    (with-restriction (car bounds) (cdr bounds)
-      (goto-char (point-min))
-      (if (re-search-forward (rx bol (literal property) ":") nil t)
-          (list
-           (point)
-           (line-end-position)
-           (string-trim (buffer-substring-no-properties (point) (line-end-position))))
-        (goto-char (point-max))
-        nil))))
-
-(defun blogmore--frontmatter-p (property)
-  "Return non-nil if PROPERTY exists in the frontmatter."
-  (save-excursion
-    (blogmore--locate-frontmatter property)))
-
-(defun blogmore--post-p ()
-  "Return non-nil if the current buffer appears to be a blog post.
-
-This is determined by checking for the presence of frontmatter at the
-start of the buffer."
-  (blogmore--frontmatter-bounds))
-
 (defun blogmore--blog-post-p ()
   "Return non-nil if a blog is selected we are visiting a blog post."
-  (and (blogmore--chosen-blog-sans-error) (blogmore--post-p)))
-
-(defmacro blogmore--within-post (&rest body)
-  "Execute BODY within a blog post, or signal an error if we're not in a blog post."
-  `(if (blogmore--blog-post-p)
-       (progn ,@body)
-     (user-error "This doesn't look like a blog post")))
-
-(cl-defstruct (blogmore--frontmatter-property-location (:type list))
-  "A struct representing the location of a property in the frontmatter."
-  (start
-   nil
-   :documentation "The position of the start of the property's value.")
-  (end
-   nil
-   :documentation "The position of the end of the property's value.")
-  (value
-   nil
-   :documentation "The current value of the property."))
-
-(defun blogmore--get-frontmatter-property (property)
-  "Get the value of PROPERTY from the frontmatter, or nil if it doesn't exist."
-  (save-excursion
-    (when-let ((location (blogmore--locate-frontmatter property)))
-      (blogmore--frontmatter-property-location-value location))))
-
-(defun blogmore--set-frontmatter-property (property value)
-  "Set the value of PROPERTY in the frontmatter to VALUE."
-  (blogmore--within-post
-   (save-excursion
-     (if-let ((location (blogmore--locate-frontmatter property)))
-         (progn
-           (goto-char (blogmore--frontmatter-property-location-start location))
-           (unless (eolp)
-             (kill-line))
-           (insert (format " %s" value)))
-       (beginning-of-line)
-       (insert (format "%s: %s\n" property value))))))
-
-(defun blogmore--remove-frontmatter-property (property)
-  "Remove PROPERTY from the frontmatter."
-  (save-excursion
-    (when-let ((location (blogmore--locate-frontmatter property)))
-      (goto-char (blogmore--frontmatter-property-location-start location))
-      (delete-region (line-beginning-position) (line-end-position))
-      (kill-line))))
-
-(defun blogmore--toggle-frontmatter-property (property)
-  "Toggle the existence of boolean PROPERTY in the frontmatter.
-
-If the property doesn't exist, it is added with a value of true. If it
-does exist and if its value is true, it is removed. If it does exist and
-if its value is not true, its value is set to true."
-  (if (and
-       (blogmore--frontmatter-p property)
-       (string-equal-ignore-case (blogmore--get-frontmatter-property property) "true"))
-      (blogmore--remove-frontmatter-property property)
-    (blogmore--set-frontmatter-property property "true")))
+  (and (blogmore--chosen-blog-sans-error) (blogmore--frontmatter-bounds)))
 
 (defun blogmore--post-directory ()
   "Get the full directory for a new blog post file."
@@ -537,19 +550,19 @@ if its value is not true, its value is set to true."
   "Toggle the draft status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore--toggle-frontmatter-property "draft")))
+   (blogmore-toggle-frontmatter "draft")))
 
 ;;;###autoload
 (defun blogmore-set-category (category)
   "Set the category of the post to CATEGORY."
   (interactive (blogmore--with "Category" (blogmore--current-categories)))
-  (blogmore--set-frontmatter-property "category" category))
+  (blogmore-set-frontmatter "category" category))
 
 ;;;###autoload
 (defun blogmore-add-tag (tag)
   "Add TAG to the post's tags."
   (interactive (blogmore--with "Tag" (blogmore--current-tags)))
-  (blogmore--set-frontmatter-property
+  (blogmore-set-frontmatter
    "tags"
    (string-join
     (seq-uniq
@@ -557,7 +570,7 @@ if its value is not true, its value is set to true."
      ;; over lower-case in the resulting list of tags.
      (sort
       (append
-       (string-split (or (blogmore--get-frontmatter-property "tags") "") "," t " ")
+       (string-split (or (blogmore-get-frontmatter "tags") "") "," t " ")
        (list tag))
       #'string-lessp)
      #'string-equal-ignore-case) ", ")))
@@ -566,13 +579,13 @@ if its value is not true, its value is set to true."
 (defun blogmore-update-date ()
   "Update the date of the post to the current date and time."
   (interactive)
-  (blogmore--set-frontmatter-property "date" (blogmore--now)))
+  (blogmore-set-frontmatter "date" (blogmore--now)))
 
 ;;;###autoload
 (defun blogmore-update-modified ()
   "Update the modified date of the post to the current date and time."
   (interactive)
-  (blogmore--set-frontmatter-property "modified" (blogmore--now)))
+  (blogmore-set-frontmatter "modified" (blogmore--now)))
 
 ;;;###autoload
 (defun blogmore-link-post (file)
