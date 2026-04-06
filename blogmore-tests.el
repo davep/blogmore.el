@@ -66,9 +66,11 @@
    "Test setting frontmatter properties."
    (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
      (with-temp-buffer
-       (insert "---\ntitle: Old Title\n---\n\nContent")
+       (insert "---\n---\n")
        (should (blogmore-set-frontmatter "title" "New Title"))
        (should (equal (blogmore-get-frontmatter "title") "New Title"))
+       (should (blogmore-set-frontmatter "title" "Newer Title"))
+       (should (equal (blogmore-get-frontmatter "title") "Newer Title"))
        (should (blogmore-set-frontmatter "category" "Tech"))
        (should (equal (blogmore-get-frontmatter "category") "Tech"))
        (should (blogmore-set-frontmatter "empty" ""))
@@ -93,14 +95,17 @@
    "Test toggling frontmatter properties."
    (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
      (with-temp-buffer
-       (insert "---\ntitle: Test\n---\n\nContent")
+       (insert "---\ntitle: Test\nother: false\n---\n\nContent")
        (should (blogmore-toggle-frontmatter "test"))
        (should (equal (blogmore-get-frontmatter "test") "true"))
        (should (blogmore-toggle-frontmatter "test"))
-       (should-not (blogmore-get-frontmatter "test"))))
+       (should-not (blogmore-get-frontmatter "test"))
+       (should (equal (blogmore-get-frontmatter "other") "false"))
+       (should (blogmore-toggle-frontmatter "other"))
+       (should (equal (blogmore-get-frontmatter "other") "true")))
      (with-temp-buffer
        (insert "No frontmatter here")
-       (should-not (blogmore-toggle-frontmatter "test"))))
+       (should-not (blogmore-toggle-frontmatter "test")))))
 
 (ert-deftest blogmore--blog-post-p-test ()
   "Test blogmore--blog-post-p returns correct values."
@@ -219,5 +224,35 @@
       ;; Select the first blog and try again.
       (let ((blogmore--current-blog (car blogmore-blogs)))
         (should (equal (blogmore--chosen-blog) (car blogmore-blogs)))))))
+
+(ert-deftest blogmore-add-tag-test ()
+  "Test that blogmore-add-tag adds a tag to the current post."
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
+    (with-temp-buffer
+      (insert "---\ntitle: Test\n---\n\nContent")
+      (let ((inhibit-message t))
+        (should-not (blogmore-get-frontmatter "tags"))
+        (blogmore-add-tag "Emacs")
+        (should (equal (blogmore-get-frontmatter "tags") "Emacs"))
+        (blogmore-add-tag "Lisp")
+        (should (equal (blogmore-get-frontmatter "tags") "Emacs, Lisp"))
+        (blogmore-add-tag "Emacs")
+        (should (equal (blogmore-get-frontmatter "tags") "Emacs, Lisp"))
+        (blogmore-add-tag "A")
+        (should (equal (blogmore-get-frontmatter "tags") "A, Emacs, Lisp"))))))
+
+(ert-deftest blogmore-remove-tag-test ()
+  "Test that blogmore-remove-tag removes a tag from the current post."
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
+    (with-temp-buffer
+      (insert "---\ntitle: Test\ntags: A, Emacs, Lisp\n---\n\nContent")
+      (let ((inhibit-message t))
+        (should (equal (blogmore-get-frontmatter "tags") "A, Emacs, Lisp"))
+        (blogmore-remove-tag "Emacs")
+        (should (equal (blogmore-get-frontmatter "tags") "A, Lisp"))
+        (blogmore-remove-tag "A")
+        (should (equal (blogmore-get-frontmatter "tags") "Lisp"))
+        (blogmore-remove-tag "Lisp")
+        (should (equal (blogmore-get-frontmatter "tags") ""))))))
 
 ;;; blogmore-tests.el ends here
