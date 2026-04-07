@@ -542,7 +542,8 @@ to select a blog to work on first."
     (insert (format (blogmore--post-template) title (blogmore--now)))
     (forward-line -2)
     (save-excursion
-      (run-hooks 'blogmore-new-post-hook))))
+      (run-hooks 'blogmore-new-post-hook))
+    (basic-save-buffer)))
 
 ;;;###autoload
 (defun blogmore-edit (file)
