@@ -638,6 +638,36 @@ to select a blog to work on first."
   (save-excursion
     (insert tag)))
 
+(defun blogmore-webpify-image-at-point ()
+  "Change the type of the image at `point' to webp."
+  (interactive)
+  (let ((line (buffer-substring-no-properties
+               (line-beginning-position)
+               (line-end-position))))
+    (if-let* ((image-data
+               (string-match
+                (rx
+                 (group
+                  "!["
+                  (minimal-match (zero-or-more anything))
+                  "]")
+                 "("
+                 (group (1+ (not (any "#" ")"))))
+                 (group (0+ (not (any ")"))))
+                 ")")
+                line))
+              (caption (match-string 1 line))
+              (filename (match-string 2 line))
+              (anchor (match-string 3 line)))
+        (save-excursion
+          (delete-region (line-beginning-position) (line-end-position))
+          (insert
+           (format "%s(%s.webp%s)"
+                   caption
+                   (file-name-sans-extension filename)
+                   anchor)))
+      (user-error "No image found at point"))))
+
 ;;;###autoload
 (transient-define-prefix blogmore ()
   "Show a transient for BlogMore commands."
@@ -661,7 +691,10 @@ to select a blog to work on first."
    ["Links"
     ("l c" "Link to a category" blogmore-link-category :inapt-if-not blogmore--blog-post-p)
     ("l p" "Link to a post" blogmore-link-post :inapt-if-not blogmore--blog-post-p)
-    ("l t" "Link to a tag" blogmore-link-tag :inapt-if-not blogmore--blog-post-p)]])
+    ("l t" "Link to a tag" blogmore-link-tag :inapt-if-not blogmore--blog-post-p)
+    ""
+    "Other"
+    ("w" "Webpify image at point" blogmore-webpify-image-at-point :inapt-if-not blogmore--blog-post-p)]])
 
 (provide 'blogmore)
 
