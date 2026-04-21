@@ -528,6 +528,22 @@ to select a blog to work on first."
      (format "%s from %s: " prompt (blogmore--blog-title))
      existing-values))))
 
+(defsubst blogmore--image-extension (image)
+  "Get the extension of IMAGE, or nil if it doesn't have one."
+  (when-let ((extension (downcase (or (file-name-extension image) ""))))
+    (if (string= extension "jpg")
+        "jpeg"
+      extension)))
+
+(defconst blogmore--image-type-options '("jpeg" "png" "gif" "webp")
+  "The options for image types that can be cycled through.")
+
+(defun blogmore--cycle-image-type (current)
+  "Given image extension CURRENT return the next option."
+  (if-let ((next (cadr (member (blogmore--image-extension current) blogmore--image-type-options))))
+      next
+    (car blogmore--image-type-options)))
+
 
 ;; Commands:
 
@@ -650,8 +666,8 @@ to select a blog to work on first."
   (save-excursion
     (insert tag)))
 
-(defun blogmore-webpify-image-at-point ()
-  "Change the type of the image at `point' to webp."
+(defun blogmore-cycle-image-at-point ()
+  "Cycle the type of the image at `point'."
   (interactive)
   (let ((line (buffer-substring-no-properties
                (line-beginning-position)
@@ -674,9 +690,10 @@ to select a blog to work on first."
         (save-excursion
           (delete-region (line-beginning-position) (line-end-position))
           (insert
-           (format "%s(%s.webp%s)"
+           (format "%s(%s.%s%s)"
                    caption
                    (file-name-sans-extension filename)
+                   (blogmore--cycle-image-type filename)
                    anchor)))
       (user-error "No image found at point"))))
 
@@ -706,7 +723,7 @@ to select a blog to work on first."
     ("l t" "Link to a tag" blogmore-link-tag :inapt-if-not blogmore--blog-post-p)
     ""
     "Other"
-    ("w" "Webpify image at point" blogmore-webpify-image-at-point :inapt-if-not blogmore--blog-post-p)]])
+    ("i" "Cycle image type at point" blogmore-cycle-image-at-point :inapt-if-not blogmore--blog-post-p)]])
 
 (provide 'blogmore)
 

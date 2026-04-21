@@ -15,6 +15,15 @@
   (dolist (case blogmore--test-titles)
     (should (equal (blogmore-slug (car case)) (cdr case)))))
 
+(ert-deftest blogmore--cycle-image-type-test ()
+  "Test that blogmore--cycle-image-type cycles through image types correctly."
+  (should (equal (blogmore--cycle-image-type "foo.jpg") "png"))
+  (should (equal (blogmore--cycle-image-type "foo.jpeg") "png"))
+  (should (equal (blogmore--cycle-image-type "foo.png") "gif"))
+  (should (equal (blogmore--cycle-image-type "foo.gif") "webp"))
+  (should (equal (blogmore--cycle-image-type "foo.webp") "jpeg"))
+  (should (equal (blogmore--cycle-image-type "foo") "jpeg")))
+
 (ert-deftest blogmore--frontmatter-bounds-test ()
    "Test detection of frontmatter bounds."
    (with-temp-buffer
