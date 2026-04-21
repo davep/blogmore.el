@@ -82,7 +82,7 @@ rather than as an actual *list*:
 tags: [Emacs, Lisp, Emacs Lisp, coding]
 ```
 
-or this kid of actual list:
+or this kind of actual list:
 
 ```yaml
 tags:
