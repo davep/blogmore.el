@@ -468,11 +468,11 @@ to select a blog to work on first."
    (file-name-as-directory (blogmore--post-directory))
    (funcall (blogmore--post-file-name-from-title-function) title)))
 
-(defun blogmore--property-getter (property &optional splitter)
+(defun blogmore--property-getter (property &optional separator)
   "Generate a function to match PROPERTY in a string and return its value.
 
-If SPLITTER is provided, split the value using SPLITTER and return a
-list of values instead."
+If SEPARATOR is provided, split the values using SEPARATOR, returning a
+list of lists of values."
   (lambda (candidate)
     (when (string-match
            (rx
@@ -482,12 +482,15 @@ list of values instead."
             eol)
            candidate)
       (let ((value (string-trim (match-string 1 candidate))))
-        (if splitter
-            (split-string value splitter t " ")
+        (if separator
+            (split-string value separator t " ")
           value)))))
 
 (defun blogmore--get-all (property &optional separator)
-  "Get a list of all values for PROPERTY from existing posts."
+  "Get a list of all values for PROPERTY from existing posts.
+
+If SEPARATOR is provided, split the values using SEPARATOR, returning a
+list of lists of values."
   (mapcar
    (blogmore--property-getter property separator)
    (seq-uniq
