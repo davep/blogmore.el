@@ -680,8 +680,8 @@ to select a blog to work on first."
                   (minimal-match (zero-or-more anything))
                   "]")
                  "("
-                 (group (1+ (not (any "#" ")"))))
-                 (group (0+ (not (any ")"))))
+                 (group (one-or-more (not (any "#" ")"))))
+                 (group (zero-or-more (not (any ")"))))
                  ")")
                 line))
               (caption (match-string 1 line))
