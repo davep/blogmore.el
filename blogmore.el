@@ -555,6 +555,28 @@ the resulting list, returning a list of all values."
       next
     (car blogmore--image-type-options)))
 
+(defun blogmore--image-at-point ()
+  "Return the image at point, or nil if there isn't one.
+
+If an image is found the return value is a list of the form:
+
+  (ALT-TEXT URL TITLE)."
+  (let ((line (buffer-substring-no-properties
+               (line-beginning-position)
+               (line-end-position))))
+    (when (string-match
+           (rx
+            (group "![" (minimal-match (zero-or-more anything)) "]")
+            "("
+            (group (one-or-more (not (any "#" ")"))))
+            (group (zero-or-more (not (any ")"))))
+            ")")
+           line)
+      (list
+       (match-string 1 line)
+       (match-string 2 line)
+       (match-string 3 line)))))
+
 
 ;; Commands:
 
@@ -680,33 +702,16 @@ the resulting list, returning a list of all values."
 (defun blogmore-cycle-image-at-point ()
   "Cycle the type of the image at `point'."
   (interactive)
-  (let ((line (buffer-substring-no-properties
-               (line-beginning-position)
-               (line-end-position))))
-    (if-let* ((image-data
-               (string-match
-                (rx
-                 (group
-                  "!["
-                  (minimal-match (zero-or-more anything))
-                  "]")
-                 "("
-                 (group (one-or-more (not (any "#" ")"))))
-                 (group (zero-or-more (not (any ")"))))
-                 ")")
-                line))
-              (caption (match-string 1 line))
-              (filename (match-string 2 line))
-              (anchor (match-string 3 line)))
-        (save-excursion
-          (delete-region (line-beginning-position) (line-end-position))
-          (insert
-           (format "%s(%s.%s%s)"
-                   caption
-                   (file-name-sans-extension filename)
-                   (blogmore--cycle-image-type filename)
-                   anchor)))
-      (user-error "No image found at point"))))
+  (if-let ((image (blogmore--image-at-point)))
+      (save-excursion
+        (delete-region (line-beginning-position) (line-end-position))
+        (insert
+         (format "%s(%s.%s%s)"
+                 (nth 0 image)
+                 (file-name-sans-extension (nth 1 image))
+                 (blogmore--cycle-image-type (nth 1 image))
+                 (nth 2 image))))
+    (user-error "No image found at point")))
 
 ;;;###autoload
 (transient-define-prefix blogmore ()
@@ -734,7 +739,7 @@ the resulting list, returning a list of all values."
     ("l t" "Link to a tag" blogmore-link-tag :inapt-if-not blogmore--blog-post-p)
     ""
     "Other"
-    ("i" "Cycle image type at point" blogmore-cycle-image-at-point :inapt-if-not blogmore--blog-post-p)]])
+    ("i" "Cycle image type at point" blogmore-cycle-image-at-point :inapt-if-not blogmore--image-at-point)]])
 
 (provide 'blogmore)
 
