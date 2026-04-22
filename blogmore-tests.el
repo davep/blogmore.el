@@ -181,22 +181,15 @@
 (ert-deftest blogmore--current-categories-test ()
   "Test extraction of categories from post content."
   (cl-letf (((symbol-function 'blogmore--get-all)
-             (lambda (_)
-               '("category: Z"
-                 "category: Emacs"
-                 "category: Lisp"
-                 "category: Life"
-                 "category: A"))))
+             (lambda (_ &optional _)
+               '("Z" "Emacs" "Lisp" "Life" "A"))))
     (should (equal (blogmore--current-categories) '("A" "Emacs" "Life" "Lisp" "Z")))))
 
 (ert-deftest blogmore--current-tags-test ()
   "Test extraction of tags from post content."
   (cl-letf (((symbol-function 'blogmore--get-all)
-             (lambda (_)
-               '("tags: Emacs, Lisp"
-                 "tags: Emacs, Org"
-                 "tags: Lisp, Emacs"
-                 "tags: Z, A"))))
+             (lambda (_ &optional _)
+               '("Emacs" "Lisp" "Emacs" "Org" "Lisp" "Emacs" "Z" "A"))))
     (should (equal (sort (blogmore--current-tags) #'string-lessp)
                    '("A" "Emacs" "Lisp" "Org" "Z")))))
 
