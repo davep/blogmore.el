@@ -2,7 +2,7 @@
 ;; Copyright 2026 by Dave Pearson <davep@davep.org>
 
 ;; Author: Dave Pearson <davep@davep.org>
-;; Version: 4.5.0
+;; Version: 4.6.0
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blogmore.el
 ;; Package-Requires: ((emacs "29.1"))
