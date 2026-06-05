@@ -647,6 +647,13 @@ If an image is found the return value is a list of the form:
    (blogmore-toggle-frontmatter "show_toc")))
 
 ;;;###autoload
+(defun blogmore-toggle-show-toc-inline ()
+  "Toggle the show-toc-inline status of the post"
+  (interactive)
+  (blogmore--within-post
+   (blogmore-toggle-frontmatter "show_toc_inline")))
+
+;;;###autoload
 (defun blogmore-invite-comments-to (address)
   "Set the invite-comments status of the post to ADDRESS."
   (interactive
@@ -810,7 +817,8 @@ If an image is found the return value is a list of the form:
    ["Other"
     ("C t" "Toggle invite comments" blogmore-toggle-invite-comments :inapt-if-not blogmore--blog-post-p)
     ("C a" "Comments to address" blogmore-invite-comments-to :inapt-if-not blogmore--blog-post-p)
-    ("o s" "Toggle show ToC" blogmore-toggle-show-toc :inapt-if-not blogmore--blog-post-p)]])
+    ("o s" "Toggle show ToC" blogmore-toggle-show-toc :inapt-if-not blogmore--blog-post-p)
+    ("o i" "Toggle show ToC inline" blogmore-toggle-show-toc-inline :inapt-if-not blogmore--blog-post-p)]])
 
 (provide 'blogmore)
 
