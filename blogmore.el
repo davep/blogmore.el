@@ -640,6 +640,13 @@ If an image is found the return value is a list of the form:
    (blogmore-toggle-frontmatter "invite_comments")))
 
 ;;;###autoload
+(defun blogmore-toggle-show-toc ()
+  "Toggle the show-toc status of the post."
+  (interactive)
+  (blogmore--within-post
+   (blogmore-toggle-frontmatter "show_toc")))
+
+;;;###autoload
 (defun blogmore-invite-comments-to (address)
   "Set the invite-comments status of the post to ADDRESS."
   (interactive
@@ -779,8 +786,9 @@ If an image is found the return value is a list of the form:
                  (blogmore--blog-title)
                "No blog selected")))
    ["Blog"
-    ("b"  "Select blog" blogmore-work-on)]
-   ["Post"
+    ("b"  "Select blog" blogmore-work-on)
+    ""
+    "Post"
     ("n" "New post" blogmore-new :inapt-if-not blogmore--chosen-blog-sans-error)
     ("e" "Edit post" blogmore-edit :inapt-if-not blogmore--chosen-blog-sans-error)
     ("=" "Become like post" blogmore-become-like :inapt-if-not blogmore--blog-post-p)
@@ -795,12 +803,14 @@ If an image is found the return value is a list of the form:
     ("l p" "Link to a post" blogmore-link-post :inapt-if-not blogmore--blog-post-p)
     ("l t" "Link to a tag" blogmore-link-tag :inapt-if-not blogmore--blog-post-p)
     ""
-    "Other"
+    "Images"
     ("i t" "Cycle image type at point" blogmore-cycle-image-at-point :inapt-if-not blogmore--image-at-point)
     ("i c" "Toggle image centre at point" blogmore-toggle-image-centre :inapt-if-not blogmore--image-at-point)
-    ("i s" "Set image at point as cover" blogmore-set-as-cover :inapt-if-not blogmore--image-at-point)
+    ("i s" "Set image at point as cover" blogmore-set-as-cover :inapt-if-not blogmore--image-at-point)]
+   ["Other"
     ("C t" "Toggle invite comments" blogmore-toggle-invite-comments :inapt-if-not blogmore--blog-post-p)
-    ("C a" "Comments to address" blogmore-invite-comments-to :inapt-if-not blogmore--blog-post-p)]])
+    ("C a" "Comments to address" blogmore-invite-comments-to :inapt-if-not blogmore--blog-post-p)
+    ("o s" "Toggle show ToC" blogmore-toggle-show-toc :inapt-if-not blogmore--blog-post-p)]])
 
 (provide 'blogmore)
 
