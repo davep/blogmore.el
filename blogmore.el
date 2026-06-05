@@ -264,12 +264,13 @@ t and the buffer is left unchanged."
         (kill-line)))
     t))
 
-(defun blogmore-toggle-frontmatter (property)
+(defun blogmore-toggle-frontmatter (property &optional remove-false)
   "Toggle the existence of boolean PROPERTY in the frontmatter.
 
 If the property doesn't exist, it is added with a value of true. If it
-does exist and if its value is true, it is removed. If it does exist and
-if its value is not true, its value is set to true.
+does exist and if its value is true and if REMOVE-FALSE is non-nil, it
+is removed, otherwise it is set to false. If it does exist and if its
+value is not true, its value is set to true.
 
 If a frontmatter section can't be found in the current buffer, the
 function returns nil, otherwise the property is toggled and the function
@@ -277,7 +278,9 @@ returns t."
   (if (and
        (blogmore--frontmatter-p property)
        (string-equal-ignore-case (blogmore-get-frontmatter property) "true"))
-      (blogmore-remove-frontmatter property)
+      (if remove-false
+          (blogmore-remove-frontmatter property)
+        (blogmore-set-frontmatter property "false"))
     (blogmore-set-frontmatter property "true")))
 
 
@@ -627,7 +630,7 @@ If an image is found the return value is a list of the form:
   "Toggle the draft status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "draft")))
+   (blogmore-toggle-frontmatter "draft" t)))
 
 ;;;###autoload
 (defun blogmore-toggle-invite-comments ()
