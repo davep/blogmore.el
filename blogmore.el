@@ -35,10 +35,10 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cl-lib)
-  (require 'subr-x))
+  (require 'cl-lib))
 (require 'eieio-custom)
 (require 'parse-time)
+(require 'subr-x)
 (require 'transient)
 (require 'ucs-normalize)
 
@@ -648,7 +648,7 @@ If an image is found the return value is a list of the form:
 
 ;;;###autoload
 (defun blogmore-toggle-show-toc-inline ()
-  "Toggle the show-toc-inline status of the post"
+  "Toggle the show-toc-inline status of the post."
   (interactive)
   (blogmore--within-post
    (blogmore-toggle-frontmatter "show_toc_inline")))
