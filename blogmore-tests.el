@@ -102,21 +102,37 @@
        (insert "No frontmatter here")
        (should-not (blogmore-remove-frontmatter "title")))))
 
-(ert-deftest blogmore-toggle-frontmatter-test ()
-   "Test toggling frontmatter properties."
+(ert-deftest blogmore-sticky-toggle-frontmatter-test ()
+   "Test toggling frontmatter properties in sticky mode."
    (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
      (with-temp-buffer
        (insert "---\ntitle: Test\nother: false\n---\n\nContent")
        (should (blogmore-toggle-frontmatter "test"))
        (should (equal (blogmore-get-frontmatter "test") "true"))
        (should (blogmore-toggle-frontmatter "test"))
-       (should-not (blogmore-get-frontmatter "test"))
+       (should (equal (blogmore-get-frontmatter "test") "false"))
        (should (equal (blogmore-get-frontmatter "other") "false"))
        (should (blogmore-toggle-frontmatter "other"))
        (should (equal (blogmore-get-frontmatter "other") "true")))
      (with-temp-buffer
        (insert "No frontmatter here")
        (should-not (blogmore-toggle-frontmatter "test")))))
+
+(ert-deftest blogmore-non-sticky-toggle-frontmatter-test ()
+   "Test toggling frontmatter properties in non-sticky mode."
+   (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
+     (with-temp-buffer
+       (insert "---\ntitle: Test\nother: false\n---\n\nContent")
+       (should (blogmore-toggle-frontmatter "test" t))
+       (should (equal (blogmore-get-frontmatter "test") "true"))
+       (should (blogmore-toggle-frontmatter "test" t))
+       (should-not (blogmore-get-frontmatter "test"))
+       (should (equal (blogmore-get-frontmatter "other") "false"))
+       (should (blogmore-toggle-frontmatter "other" t))
+       (should (equal (blogmore-get-frontmatter "other") "true")))
+     (with-temp-buffer
+       (insert "No frontmatter here")
+       (should-not (blogmore-toggle-frontmatter "test" t)))))
 
 (ert-deftest blogmore--blog-post-p-test ()
   "Test blogmore--blog-post-p returns correct values."
