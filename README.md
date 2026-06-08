@@ -67,10 +67,10 @@ While, as I say above, I've tried to make it as configurable as possible,
 there are still some assumptions made and if your blog or posts don't match
 these then `blogmore.el` might not work so well for you.
 
-### Tags
+### Tags & Series
 
-It is assumed that your tags are always given as a comma-separated list like
-this:
+It is assumed that your tags and series are always given as a
+comma-separated list like this:
 
 ```yaml
 tags: Emacs, Lisp, Emacs Lisp, coding

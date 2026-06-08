@@ -494,20 +494,22 @@ list of lists of values."
 
 If SEPARATOR is provided, split the values using SEPARATOR and flatten
 the resulting list, returning a list of all values."
-  (funcall
-   (if separator #'flatten-list #'identity)
-   (mapcar
-    (blogmore--property-getter property separator)
-    (seq-uniq
-     (split-string
-      (shell-command-to-string
-       (format
-        (if (executable-find "rg")
-            "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
-          "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
-        property (expand-file-name (blogmore--posts-directory))))
-      "\n" t)
-     #'string-equal-ignore-case))))
+  (seq-remove
+   #'string-empty-p
+   (funcall
+    (if separator #'flatten-list #'identity)
+    (mapcar
+     (blogmore--property-getter property separator)
+     (seq-uniq
+      (split-string
+       (shell-command-to-string
+        (format
+         (if (executable-find "rg")
+             "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
+           "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
+         property (expand-file-name (blogmore--posts-directory))))
+       "\n" t)
+      #'string-equal-ignore-case)))))
 
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
@@ -520,6 +522,10 @@ the resulting list, returning a list of all values."
    ;; over lower-case in the resulting set.
    (sort (blogmore--get-all "tags" ",") #'string-lessp)
    #'string-equal-ignore-case))
+
+(defun blogmore--current-series ()
+  "Get a list of series from existing posts."
+  (sort (delq nil (blogmore--get-all "series")) #'string-lessp))
 
 (defun blogmore--post-picker ()
   "Pick a post from the list of existing posts."
@@ -675,6 +681,12 @@ If an image is found the return value is a list of the form:
     (string-split tags "," t " ")))
 
 ;;;###autoload
+(defun blogmore-set-series (series)
+  "Set the series of the post to SERIES."
+  (interactive (blogmore--with "Series" (blogmore--current-series)))
+  (blogmore-set-frontmatter "series" series))
+
+;;;###autoload
 (defun blogmore-add-tag (tag)
   "Add TAG to the post's tags."
   (interactive (blogmore--with "Tag" (blogmore--current-tags)))
@@ -802,6 +814,7 @@ If an image is found the return value is a list of the form:
     ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--blog-post-p)
     ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--blog-post-p)
     ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
+    ("s" "Set series" blogmore-set-series :inapt-if-not blogmore--blog-post-p)
     ("T" "Remove tag" blogmore-remove-tag :inapt-if-not blogmore--blog-post-p)
     ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
     ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)]
