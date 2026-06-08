@@ -494,20 +494,22 @@ list of lists of values."
 
 If SEPARATOR is provided, split the values using SEPARATOR and flatten
 the resulting list, returning a list of all values."
-  (funcall
-   (if separator #'flatten-list #'identity)
-   (mapcar
-    (blogmore--property-getter property separator)
-    (seq-uniq
-     (split-string
-      (shell-command-to-string
-       (format
-        (if (executable-find "rg")
-            "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
-          "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
-        property (expand-file-name (blogmore--posts-directory))))
-      "\n" t)
-     #'string-equal-ignore-case))))
+  (seq-remove
+   #'string-empty-p
+   (funcall
+    (if separator #'flatten-list #'identity)
+    (mapcar
+     (blogmore--property-getter property separator)
+     (seq-uniq
+      (split-string
+       (shell-command-to-string
+        (format
+         (if (executable-find "rg")
+             "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
+           "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
+         property (expand-file-name (blogmore--posts-directory))))
+       "\n" t)
+      #'string-equal-ignore-case)))))
 
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
