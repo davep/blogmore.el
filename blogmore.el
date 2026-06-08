@@ -523,6 +523,10 @@ the resulting list, returning a list of all values."
    (sort (blogmore--get-all "tags" ",") #'string-lessp)
    #'string-equal-ignore-case))
 
+(defun blogmore--current-series ()
+  "Get a list of series from existing posts."
+  (sort (delq nil (blogmore--get-all "series")) #'string-lessp))
+
 (defun blogmore--post-picker ()
   "Pick a post from the list of existing posts."
   (list
@@ -677,6 +681,12 @@ If an image is found the return value is a list of the form:
     (string-split tags "," t " ")))
 
 ;;;###autoload
+(defun blogmore-set-series (series)
+  "Set the series of the post to SERIES."
+  (interactive (blogmore--with "Series" (blogmore--current-series)))
+  (blogmore-set-frontmatter "series" series))
+
+;;;###autoload
 (defun blogmore-add-tag (tag)
   "Add TAG to the post's tags."
   (interactive (blogmore--with "Tag" (blogmore--current-tags)))
@@ -804,6 +814,7 @@ If an image is found the return value is a list of the form:
     ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--blog-post-p)
     ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--blog-post-p)
     ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
+    ("s" "Set series" blogmore-set-series :inapt-if-not blogmore--blog-post-p)
     ("T" "Remove tag" blogmore-remove-tag :inapt-if-not blogmore--blog-post-p)
     ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
     ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)]
