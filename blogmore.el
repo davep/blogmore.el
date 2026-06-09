@@ -807,7 +807,9 @@ If an image is found the return value is a list of the form:
      (when-let ((category (blogmore-get-frontmatter "category" frontmatter)))
        (blogmore-set-category category))
      (when-let ((tags (blogmore-get-frontmatter "tags" frontmatter)))
-       (blogmore-set-frontmatter "tags" tags)))))
+       (blogmore-set-frontmatter "tags" tags))
+     (when-let ((series (blogmore-get-frontmatter "series" frontmatter)))
+       (blogmore-set-frontmatter "series" series)))))
 
 ;;;###autoload
 (transient-define-prefix blogmore ()
