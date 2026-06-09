@@ -472,10 +472,10 @@ to select a blog to work on first."
   (unless (executable-find blogmore-command)
     (user-error
      "The 'blogmore' command-line tool is required for this operation; https://blogmore.davep.dev/"))
-  (let* ((command (format "%s dump %s \"%s\" 2> %s"
-                          blogmore-command
-                          property
-                          (expand-file-name (blogmore--posts-directory))
+  (let* ((command (format "%s dump %s %s 2> %s"
+                          (shell-quote-argument (expand-file-name blogmore-command))
+                          (shell-quote-argument property)
+                          (shell-quote-argument (expand-file-name (blogmore--posts-directory)))
                           (shell-quote-argument (null-device))))
          (data (shell-command-to-string command)))
     (when (string-empty-p data)
