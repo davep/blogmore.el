@@ -144,11 +144,6 @@ frontmatter is found, return nil."
         (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
           (cons start (match-beginning 0)))))))
 
-(defun blogmore--frontmatter-text ()
-  "Return the text of the frontmatter, or nil if no frontmatter is found."
-  (when-let ((bounds (blogmore--frontmatter-bounds)))
-    (buffer-substring-no-properties (car bounds) (cdr bounds))))
-
 (defun blogmore--frontmatter ()
   "Return the frontmatter as a YAML object, or nil if no frontmatter is found."
   (when-let ((bounds (blogmore--frontmatter-bounds)))
