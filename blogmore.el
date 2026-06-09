@@ -803,10 +803,11 @@ If an image is found the return value is a list of the form:
   "Copy the category and tags from POST to the current post."
   (interactive (blogmore--post-picker))
   (blogmore--within-post
-   (when-let ((category (blogmore-with-post post (blogmore-get-frontmatter "category"))))
-     (blogmore-set-category category)))
-   (when-let ((tags (blogmore-with-post post (blogmore-get-frontmatter "tags"))))
-     (blogmore-set-frontmatter "tags" tags)))
+   (let ((frontmatter (blogmore-with-post post (blogmore--frontmatter))))
+     (when-let ((category (blogmore-get-frontmatter "category" frontmatter)))
+       (blogmore-set-category category))
+     (when-let ((tags (blogmore-get-frontmatter "tags" frontmatter)))
+       (blogmore-set-frontmatter "tags" tags)))))
 
 ;;;###autoload
 (transient-define-prefix blogmore ()
