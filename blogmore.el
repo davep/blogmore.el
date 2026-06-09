@@ -5,7 +5,7 @@
 ;; Version: 4.7.0
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blogmore.el
-;; Package-Requires: ((emacs "29.1"))
+;; Package-Requires: ((emacs "29.1") (yaml "1.2.4"))
 
 ;; This program is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the
@@ -41,6 +41,7 @@
 (require 'subr-x)
 (require 'transient)
 (require 'ucs-normalize)
+(require 'yaml)
 
 
 (defclass blogmore-blog ()
@@ -143,42 +144,37 @@ frontmatter is found, return nil."
         (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
           (cons start (match-beginning 0)))))))
 
-(cl-defstruct blogmore--frontmatter-property-location
-  "A struct representing the location of a property in the frontmatter."
-  (start nil :documentation "The position of the start of the property's value.")
-  (end nil :documentation "The position of the end of the property's value.")
-  (value nil :documentation "The current value of the property."))
-
-(defun blogmore--locate-frontmatter (property)
-  "Locate the line for PROPERTY in the frontmatter.
-
-If the property is found, return an instance of
-`blogmore--frontmatter-property-location' with the start, end, and value
-of the property. If the property is not found, return nil.
-
-If the property is found `point' is left at the beginning of the value.
-If the property is not found, `point' is left at the end of the
-frontmatter.
-
-If there are no frontmatter markers, return nil and leave `point`
-unchanged."
+(defun blogmore--frontmatter-text ()
+  "Return the text of the frontmatter, or nil if no frontmatter is found."
   (when-let ((bounds (blogmore--frontmatter-bounds)))
-    (with-restriction (car bounds) (cdr bounds)
-      (goto-char (point-min))
-      (if (re-search-forward (rx bol (literal property) ":") nil t)
-          (make-blogmore--frontmatter-property-location
-           :start (point)
-           :end (line-end-position)
-           :value (string-trim
-                   (buffer-substring-no-properties
-                    (point)
-                    (line-end-position))))
-        (ignore (goto-char (point-max)))))))
+    (buffer-substring-no-properties (car bounds) (cdr bounds))))
+
+(defun blogmore--frontmatter ()
+  "Return the frontmatter as a YAML object, or nil if no frontmatter is found."
+  (when-let ((bounds (blogmore--frontmatter-bounds)))
+    (yaml-parse-string
+     (buffer-substring-no-properties (car bounds) (cdr bounds))
+     :false-object nil
+     :null-object nil
+     :object-key-type 'string
+     :object-type 'alist
+     :sequence-type 'list)))
+
+(gv-define-setter blogmore--frontmatter (new-frontmatter)
+  "Set the frontmatter of the current buffer to NEW-FRONTMATTER."
+  (let ((frontmatter (gensym "new-frontmatter-")))
+    `(let ((bounds (blogmore--frontmatter-bounds))
+           (,frontmatter ,new-frontmatter))
+       (if bounds
+           (replace-region-contents
+            (car bounds) (cdr bounds)
+            (lambda ()
+              (concat (yaml-encode ,frontmatter) "\n")))
+         (error "No frontmatter bounds found to update")))))
 
 (defun blogmore--frontmatter-p (property)
   "Return non-nil if PROPERTY exists in the frontmatter."
-  (save-excursion
-    (blogmore--locate-frontmatter property)))
+  (assoc property (blogmore--frontmatter)))
 
 
 ;; Public utility macros and functions.
@@ -228,9 +224,7 @@ that can be parsed."
 
 (defun blogmore-get-frontmatter (property)
   "Get the value of PROPERTY from the frontmatter, or nil if it doesn't exist."
-  (save-excursion
-    (when-let ((location (blogmore--locate-frontmatter property)))
-      (blogmore--frontmatter-property-location-value location))))
+  (cdr (assoc property (blogmore--frontmatter))))
 
 (defun blogmore-set-frontmatter (property value)
   "Set the value of PROPERTY in the frontmatter to VALUE.
@@ -239,15 +233,11 @@ If a frontmatter section can't be found in the current buffer, the
 function returns nil, otherwise PROPERTY is set to VALUE and the
 function returns t."
   (when (blogmore--frontmatter-bounds)
-    (save-excursion
-      (if-let ((location (blogmore--locate-frontmatter property)))
-          (progn
-            (goto-char (blogmore--frontmatter-property-location-start location))
-            (kill-region (point) (line-end-position))
-            (insert (format " %s" value)))
-        (beginning-of-line)
-        (insert (format "%s: %s\n" property value)))
-      t)))
+    (let ((frontmatter (blogmore--frontmatter)))
+      (if-let ((existing (assoc-string property frontmatter)))
+          (setf (cdr existing) value)
+        (setf frontmatter (append frontmatter (list (cons property value)))))
+      (setf (blogmore--frontmatter) frontmatter))))
 
 (defun blogmore-remove-frontmatter (property)
   "Remove PROPERTY from the frontmatter.
@@ -257,12 +247,8 @@ function returns nil, otherwise PROPERTY is removed and the function
 returns t. In the event that PROPERTY is not found, the function returns
 t and the buffer is left unchanged."
   (when (blogmore--frontmatter-bounds)
-    (save-excursion
-      (when-let ((location (blogmore--locate-frontmatter property)))
-        (goto-char (blogmore--frontmatter-property-location-start location))
-        (delete-region (line-beginning-position) (line-end-position))
-        (kill-line)))
-    t))
+    (let ((frontmatter (blogmore--frontmatter)))
+      (setf (blogmore--frontmatter) (assoc-delete-all property frontmatter)))))
 
 (defun blogmore-toggle-frontmatter (property &optional remove-false)
   "Toggle the existence of boolean PROPERTY in the frontmatter.
@@ -277,7 +263,7 @@ function returns nil, otherwise the property is toggled and the function
 returns t."
   (if (and
        (blogmore--frontmatter-p property)
-       (string-equal-ignore-case (blogmore-get-frontmatter property) "true"))
+       (blogmore-get-frontmatter property))
       (if remove-false
           (blogmore-remove-frontmatter property)
         (blogmore-set-frontmatter property "false"))

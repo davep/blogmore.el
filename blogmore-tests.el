@@ -38,21 +38,6 @@
      (insert "No frontmatter here")
      (should-not (blogmore--frontmatter-bounds))))
 
-(ert-deftest blogmore--locate-frontmatter-test ()
-   "Test locating frontmatter properties."
-   (with-temp-buffer
-     (insert "---\ntitle: Test Title\ndate: 2026-04-02\n---\n\nContent")
-     (let ((result (blogmore--locate-frontmatter "title")))
-       (should (blogmore--frontmatter-property-location-p result))
-       (should (equal
-                (string-trim
-                 (buffer-substring
-                  (blogmore--frontmatter-property-location-start result)
-                  (blogmore--frontmatter-property-location-end result)))
-                (blogmore--frontmatter-property-location-value result)))
-       (should (equal (blogmore--frontmatter-property-location-value result) "Test Title")))
-     (should-not (blogmore--locate-frontmatter "category"))))
-
 (ert-deftest blogmore--frontmatter-p-test ()
    "Test detection of frontmatter presence."
    (with-temp-buffer
@@ -108,12 +93,12 @@
      (with-temp-buffer
        (insert "---\ntitle: Test\nother: false\n---\n\nContent")
        (should (blogmore-toggle-frontmatter "test"))
-       (should (equal (blogmore-get-frontmatter "test") "true"))
+       (should (equal (blogmore-get-frontmatter "test") t))
        (should (blogmore-toggle-frontmatter "test"))
-       (should (equal (blogmore-get-frontmatter "test") "false"))
-       (should (equal (blogmore-get-frontmatter "other") "false"))
+       (should (equal (blogmore-get-frontmatter "test") nil))
+       (should (equal (blogmore-get-frontmatter "other") nil))
        (should (blogmore-toggle-frontmatter "other"))
-       (should (equal (blogmore-get-frontmatter "other") "true")))
+       (should (equal (blogmore-get-frontmatter "other") t)))
      (with-temp-buffer
        (insert "No frontmatter here")
        (should-not (blogmore-toggle-frontmatter "test")))))
@@ -124,12 +109,12 @@
      (with-temp-buffer
        (insert "---\ntitle: Test\nother: false\n---\n\nContent")
        (should (blogmore-toggle-frontmatter "test" t))
-       (should (equal (blogmore-get-frontmatter "test") "true"))
+       (should (blogmore-get-frontmatter "test"))
        (should (blogmore-toggle-frontmatter "test" t))
        (should-not (blogmore-get-frontmatter "test"))
-       (should (equal (blogmore-get-frontmatter "other") "false"))
+       (should-not (blogmore-get-frontmatter "other"))
        (should (blogmore-toggle-frontmatter "other" t))
-       (should (equal (blogmore-get-frontmatter "other") "true")))
+       (should (equal (blogmore-get-frontmatter "other") t)))
      (with-temp-buffer
        (insert "No frontmatter here")
        (should-not (blogmore-toggle-frontmatter "test" t)))))
