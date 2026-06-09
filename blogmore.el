@@ -295,6 +295,17 @@ returns t."
   :type `(repeat (object :class blogmore-blog :value ,(blogmore-blog)))
   :group 'blogmore)
 
+(defcustom blogmore-command "blogmore"
+  "The command to run BlogMore operations that require the command-line tool.
+
+If BlogMore is installed and in your path the default setting should be
+fine. However, if you have multiple versions of BlogMore installed, or
+possibly have virtual environments appearing on your `exec-path', this
+might cause problems. If so you can set this to point to a specific
+instance of BlogMore."
+  :type '(file :must-match t)
+  :group 'blogmore)
+
 (defcustom blogmore-new-post-hook nil
   "Hook run after creating a new blog post."
   :type 'hook
@@ -460,61 +471,32 @@ to select a blog to work on first."
    (file-name-as-directory (blogmore--post-directory))
    (funcall (blogmore--post-file-name-from-title-function) title)))
 
-(defun blogmore--property-getter (property &optional separator)
-  "Generate a function to match PROPERTY in a string and return its value.
-
-If SEPARATOR is provided, split the values using SEPARATOR, returning a
-list of lists of values."
-  (lambda (candidate)
-    (when (string-match
-           (rx
-            bol (literal property) ":"
-            (zero-or-more space)
-            (group (zero-or-more any))
-            eol)
-           candidate)
-      (let ((value (string-trim (match-string 1 candidate))))
-        (if separator
-            (split-string value separator t " ")
-          value)))))
-
-(defun blogmore--get-all (property &optional separator)
-  "Get a list of all values for PROPERTY from existing posts.
-
-If SEPARATOR is provided, split the values using SEPARATOR and flatten
-the resulting list, returning a list of all values."
-  (seq-remove
-   #'string-empty-p
-   (funcall
-    (if separator #'flatten-list #'identity)
-    (mapcar
-     (blogmore--property-getter property separator)
-     (seq-uniq
-      (split-string
-       (shell-command-to-string
-        (format
-         (if (executable-find "rg")
-             "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
-           "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
-         property (expand-file-name (blogmore--posts-directory))))
-       "\n" t)
-      #'string-equal-ignore-case)))))
+(defun blogmore--list-of (property)
+  "Get the PROPERTY list from BlogMore."
+  (if (executable-find blogmore-command)
+      (mapcar
+       #'cadr
+       (json-parse-string
+        (shell-command-to-string
+         (format "%s dump %s \"%s\" 2> %s"
+                 blogmore-command
+                 property
+                 (expand-file-name (blogmore--posts-directory))
+                 (shell-quote-argument (null-device))))
+        :array-type 'list))
+    (user-error "The 'blogmore' command-line tool is required for this operation; https://blogmore.davep.dev/")))
 
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
-  (sort (delq nil (blogmore--get-all "category")) #'string-lessp))
+  (blogmore--list-of "categories"))
 
 (defun blogmore--current-tags ()
   "Get a list of tags from existing posts."
-  (seq-uniq
-   ;; Sorting *before* making unique because I want to favour upper-case
-   ;; over lower-case in the resulting set.
-   (sort (blogmore--get-all "tags" ",") #'string-lessp)
-   #'string-equal-ignore-case))
+  (blogmore--list-of "tags"))
 
 (defun blogmore--current-series ()
   "Get a list of series from existing posts."
-  (sort (delq nil (blogmore--get-all "series")) #'string-lessp))
+  (blogmore--list-of "series"))
 
 (defun blogmore--post-picker ()
   "Pick a post from the list of existing posts."
