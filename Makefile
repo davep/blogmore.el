@@ -12,8 +12,12 @@ test:
 
 .PHONY: clean
 clean:
-	@echo "Cleaning up build artifacts..."
+	@echo "Cleaning elc files..."
 	rm -f *.elc
+
+.PHONY: veryclean
+veryclean: clean
+	@echo "Cleaning dependencies..."
 	rm -rf .packages
 
 ### Makefile ends here
