@@ -4,13 +4,12 @@
 
 (setq package-user-dir (expand-file-name ".packages" default-directory)
       package-archives
-      '(("gnu"   . "https://elpa.gnu.org/packages/")
-        ("melpa" . "https://melpa.org/packages/")))
+      '(("gnu" . "https://elpa.gnu.org/packages/")))
 
 (package-initialize)
 
 (unless package-archive-contents
-  (message "Refreshing package archives from ELPA/MELPA...")
+  (message "Refreshing package archives from ELPA...")
   (package-refresh-contents))
 
 (defvar project-dependencies '(yaml)
