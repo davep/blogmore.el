@@ -1,7 +1,19 @@
-all:
-	emacs --batch -f batch-byte-compile blogmore.el
+EMACS_BATCH = HOME=/tmp/emacs-sandbox emacs -Q --batch -l dev-environment.el
 
+.PHONY: all
+all:
+	@echo "Byte-compiling blogmore.el..."
+	$(EMACS_BATCH) -f batch-byte-compile blogmore.el
+
+.PHONY: test
 test:
-	emacs --batch -l ert -l blogmore.el -l blogmore-tests.el -f ert-run-tests-batch-and-exit
+	@echo "Running test suite..."
+	$(EMACS_BATCH) -l blogmore.el -l blogmore-tests.el -f ert-run-tests-batch-and-exit
+
+.PHONY: clean
+clean:
+	@echo "Cleaning up build artifacts..."
+	rm -f *.elc
+	rm -rf .packages
 
 ### Makefile ends here
