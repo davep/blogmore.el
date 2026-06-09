@@ -295,9 +295,9 @@ returns t."
 
 If BlogMore is installed and in your path the default setting should be
 fine. However, if you have multiple versions of BlogMore installed, or
-possibly have virtual environments appearing on your `exec-path', this
-might cause problems. If so you can set this to point to a specific
-instance of BlogMore."
+possibly have virtual environments appearing in the variable
+`exec-path', this might cause problems. If so you can set this to point
+to a specific instance of BlogMore."
   :type '(file :must-match t)
   :group 'blogmore)
 
