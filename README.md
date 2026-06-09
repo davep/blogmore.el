@@ -1,4 +1,4 @@
-x1# blogmore.el
+# blogmore.el
 
 ## Introduction
 
