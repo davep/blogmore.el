@@ -473,18 +473,25 @@ to select a blog to work on first."
 
 (defun blogmore--list-of (property)
   "Get the PROPERTY list from BlogMore."
-  (if (executable-find blogmore-command)
-      (mapcar
-       #'cadr
-       (json-parse-string
-        (shell-command-to-string
-         (format "%s dump %s \"%s\" 2> %s"
-                 blogmore-command
-                 property
-                 (expand-file-name (blogmore--posts-directory))
-                 (shell-quote-argument (null-device))))
-        :array-type 'list))
-    (user-error "The 'blogmore' command-line tool is required for this operation; https://blogmore.davep.dev/")))
+  (unless (executable-find blogmore-command)
+    (user-error
+     "The 'blogmore' command-line tool is required for this operation; https://blogmore.davep.dev/"))
+  (let* ((command (format "%s dump %s \"%s\" 2> %s"
+                          blogmore-command
+                          property
+                          (expand-file-name (blogmore--posts-directory))
+                          (shell-quote-argument (null-device))))
+         (data (shell-command-to-string command)))
+    (when (string-empty-p data)
+      (user-error "%s did not return any data for %s" command property))
+    (mapcar #'cadr
+            (condition-case parse-error
+                (json-parse-string data :array-type 'list)
+              (error
+               (user-error
+                "Error parsing output from %s -- %s"
+                command
+                (error-message-string parse-error)))))))
 
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
