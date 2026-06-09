@@ -493,17 +493,32 @@ to select a blog to work on first."
                 command
                 (error-message-string parse-error)))))))
 
+(defvar blogmore--current-categories-cache nil
+  "Cache for the list of categories from existing posts.")
+
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
-  (blogmore--list-of "categories"))
+  (or
+   blogmore--current-categories-cache
+   (setq blogmore--current-categories-cache (blogmore--list-of "categories"))))
+
+(defvar blogmore--current-tags-cache nil
+  "Cache for the list of tags from existing posts.")
 
 (defun blogmore--current-tags ()
   "Get a list of tags from existing posts."
-  (blogmore--list-of "tags"))
+  (or
+   blogmore--current-tags-cache
+   (setq blogmore--current-tags-cache (blogmore--list-of "tags"))))
+
+(defvar blogmore--current-series-cache nil
+  "Cache for the list of series from existing posts.")
 
 (defun blogmore--current-series ()
   "Get a list of series from existing posts."
-  (blogmore--list-of "series"))
+  (or
+   blogmore--current-series-cache
+   (setq blogmore--current-series-cache (blogmore--list-of "series"))))
 
 (defun blogmore--post-picker ()
   "Pick a post from the list of existing posts."
@@ -578,6 +593,14 @@ If an image is found the return value is a list of the form:
 ;; Commands:
 
 ;;;###autoload
+(defun blogmore-clear-caches ()
+  "Clear the caches for categories, tags, and series, etc."
+  (interactive)
+  (setq blogmore--current-categories-cache nil
+        blogmore--current-tags-cache nil
+        blogmore--current-series-cache nil))
+
+;;;###autoload
 (defun blogmore-work-on (blog)
   "Set the current blog to BLOG."
   (interactive (list (completing-read "Blog: " (mapcar #'blogmore-blog-title blogmore-blogs) nil t)))
@@ -586,6 +609,7 @@ If an image is found the return value is a list of the form:
          (lambda (candidate)
            (string= (blogmore-blog-title candidate) blog))
          blogmore-blogs))
+  (blogmore-clear-caches)
   (message "Now working on %s" blog)
   (when transient-current-prefix
     (call-interactively #'blogmore)))
@@ -837,7 +861,8 @@ If an image is found the return value is a list of the form:
     ("C t" "Toggle invite comments" blogmore-toggle-invite-comments :inapt-if-not blogmore--blog-post-p)
     ("C a" "Comments to address" blogmore-invite-comments-to :inapt-if-not blogmore--blog-post-p)
     ("o s" "Toggle show ToC" blogmore-toggle-show-toc :inapt-if-not blogmore--blog-post-p)
-    ("o i" "Toggle show ToC inline" blogmore-toggle-show-toc-inline :inapt-if-not blogmore--blog-post-p)]])
+    ("o i" "Toggle show ToC inline" blogmore-toggle-show-toc-inline :inapt-if-not blogmore--blog-post-p)
+    ("x c" "Clear caches" blogmore-clear-caches)]])
 
 (provide 'blogmore)
 
