@@ -184,7 +184,7 @@ frontmatter is found, return nil."
   (declare (indent 1))
   `(with-temp-buffer
      (insert-file-contents ,post-file)
-      ,@body))
+     ,@body))
 
 (defun blogmore-clean-time-string (time-string)
   "Clean TIME-STRING to the format YYYY-MM-DDTHH:MM:SS+NNNN.
@@ -393,6 +393,7 @@ a new blog post."
 
 (defmacro blogmore--within-post (&rest body)
   "Execute BODY within a blog post, or signal an error if we're not in a blog post."
+  (declare (indent 0))
   `(if (blogmore--blog-post-p)
        (progn ,@body)
      (user-error "This doesn't look like a blog post")))
@@ -536,10 +537,10 @@ to select a blog to work on first."
 (defun blogmore--with (prompt existing-values)
   "Prompt the user with PROMPT and offer EXISTING-VALUES as completions."
   (blogmore--within-post
-   (list
-    (completing-read
-     (format "%s from %s: " prompt (blogmore--blog-title))
-     existing-values))))
+    (list
+     (completing-read
+      (format "%s from %s: " prompt (blogmore--blog-title))
+      existing-values))))
 
 (defsubst blogmore--image-extension (image)
   "Get the extension of IMAGE, or nil if it doesn't have one."
@@ -638,28 +639,28 @@ If an image is found the return value is a list of the form:
   "Toggle the draft status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "draft" t)))
+    (blogmore-toggle-frontmatter "draft" t)))
 
 ;;;###autoload
 (defun blogmore-toggle-invite-comments ()
   "Toggle the invite-comments status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "invite_comments")))
+    (blogmore-toggle-frontmatter "invite_comments")))
 
 ;;;###autoload
 (defun blogmore-toggle-show-toc ()
   "Toggle the show-toc status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "show_toc")))
+    (blogmore-toggle-frontmatter "show_toc")))
 
 ;;;###autoload
 (defun blogmore-toggle-show-toc-inline ()
   "Toggle the show-toc-inline status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "show_toc_inline")))
+    (blogmore-toggle-frontmatter "show_toc_inline")))
 
 ;;;###autoload
 (defun blogmore-invite-comments-to (address)
@@ -816,13 +817,13 @@ If an image is found the return value is a list of the form:
   "Copy the category and tags from POST to the current post."
   (interactive (blogmore--post-picker))
   (blogmore--within-post
-   (let ((frontmatter (blogmore-with-post post (blogmore--frontmatter))))
-     (when-let ((category (blogmore-get-frontmatter "category" frontmatter)))
-       (blogmore-set-category category))
-     (when-let ((tags (blogmore-get-frontmatter "tags" frontmatter)))
-       (blogmore-set-frontmatter "tags" tags))
-     (when-let ((series (blogmore-get-frontmatter "series" frontmatter)))
-       (blogmore-set-frontmatter "series" series)))))
+    (let ((frontmatter (blogmore-with-post post (blogmore--frontmatter))))
+      (when-let ((category (blogmore-get-frontmatter "category" frontmatter)))
+        (blogmore-set-category category))
+      (when-let ((tags (blogmore-get-frontmatter "tags" frontmatter)))
+        (blogmore-set-frontmatter "tags" tags))
+      (when-let ((series (blogmore-get-frontmatter "series" frontmatter)))
+        (blogmore-set-frontmatter "series" series)))))
 
 ;;;###autoload
 (transient-define-prefix blogmore ()
