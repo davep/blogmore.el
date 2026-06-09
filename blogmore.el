@@ -222,9 +222,12 @@ that can be parsed."
     ;; by the previous step.
     (replace-regexp-in-string (rx (or (seq bol "-") (seq "-" eol))) "")))
 
-(defun blogmore-get-frontmatter (property)
-  "Get the value of PROPERTY from the frontmatter, or nil if it doesn't exist."
-  (cdr (assoc property (blogmore--frontmatter))))
+(defun blogmore-get-frontmatter (property &optional frontmatter)
+  "Get the value of PROPERTY from the frontmatter, or nil if it doesn't exist.
+
+If FRONTMATTER is provided, it is used instead of parsing the
+frontmatter from the buffer."
+  (cdr (assoc property (or frontmatter (blogmore--frontmatter)))))
 
 (defun blogmore-set-frontmatter (property value)
   "Set the value of PROPERTY in the frontmatter to VALUE.
