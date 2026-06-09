@@ -661,18 +661,42 @@ If an image is found the return value is a list of the form:
   (interactive (blogmore--with "Category" (blogmore--current-categories)))
   (blogmore-set-frontmatter "category" category))
 
+(defun blogmore--post-series ()
+  "Get the series for the current post as a list."
+  (when-let ((series (blogmore-get-frontmatter "series")))
+    (if (stringp series)
+        (string-split series "," t " ")
+      series)))
+
+;;;###autoload
+(defun blogmore-add-series (series)
+  "Add SERIES to the post's series."
+  (interactive (blogmore--with "Series" (blogmore--current-series)))
+  (blogmore-set-frontmatter
+   "series"
+   (seq-uniq
+    ;; Sorting *before* making unique because I want to favour upper-case
+    ;; over lower-case in the resulting list of series.
+    (sort (append (blogmore--post-series) (list series)) #'string-lessp)
+    #'string-equal-ignore-case))
+  (message "Added series '%s'" series))
+
+;;;###autoload
+(defun blogmore-remove-series (series)
+  "Remove SERIES from the post's series."
+  (interactive
+   (list (when-let (series (blogmore--post-series))
+           (completing-read "Series to remove: " series nil t))))
+  (when series
+    (blogmore-set-frontmatter "series" (remove series (blogmore--post-series)))
+    (message "Removed series '%s'" series)))
+
 (defun blogmore--post-tags ()
   "Get the tags for the current post as a list."
   (when-let ((tags (blogmore-get-frontmatter "tags")))
     (if (stringp tags)
         (string-split tags "," t " ")
       tags)))
-
-;;;###autoload
-(defun blogmore-set-series (series)
-  "Set the series of the post to SERIES."
-  (interactive (blogmore--with "Series" (blogmore--current-series)))
-  (blogmore-set-frontmatter "series" series))
 
 ;;;###autoload
 (defun blogmore-add-tag (tag)
@@ -800,7 +824,8 @@ If an image is found the return value is a list of the form:
     ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--blog-post-p)
     ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--blog-post-p)
     ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
-    ("s" "Set series" blogmore-set-series :inapt-if-not blogmore--blog-post-p)
+    ("s" "Add series" blogmore-add-series :inapt-if-not blogmore--blog-post-p)
+    ("S" "Remove series" blogmore-remove-series :inapt-if-not blogmore--blog-post-p)
     ("T" "Remove tag" blogmore-remove-tag :inapt-if-not blogmore--blog-post-p)
     ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
     ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)]

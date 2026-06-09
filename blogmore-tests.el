@@ -260,4 +260,28 @@
         (blogmore-remove-tag "Lisp")
         (should (equal (blogmore--post-tags) nil))))))
 
+(ert-deftest blogmore-add-series-test ()
+  "Test that blogmore-add-series adds a series to the current post."
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
+    (with-temp-buffer
+      (insert "---\ntitle: Test\n---\n\nContent")
+      (let ((inhibit-message t))
+        (should-not (blogmore--post-series))
+        (blogmore-add-series "Emacs Tips")
+        (should (equal (blogmore--post-series) '("Emacs Tips")))
+        (blogmore-add-series "Lisp Tricks")
+        (should (equal (blogmore--post-series) '("Emacs Tips" "Lisp Tricks")))))))
+
+(ert-deftest blogmore-remove-series-test ()
+  "Test that blogmore-remove-series removes a series from the current post."
+  (let ((blogmore--current-blog (blogmore-blog :posts-directory "/tmp/")))
+    (with-temp-buffer
+      (insert "---\ntitle: Test\nseries: Emacs Tips, Lisp Tricks\n---\n\nContent")
+      (let ((inhibit-message t))
+        (should (equal (blogmore--post-series) '("Emacs Tips" "Lisp Tricks")))
+        (blogmore-remove-series "Emacs Tips")
+        (should (equal (blogmore--post-series) '("Lisp Tricks")))
+        (blogmore-remove-series "Lisp Tricks")
+        (should (equal (blogmore--post-series) nil))))))
+
 ;;; blogmore-tests.el ends here
