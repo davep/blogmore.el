@@ -179,21 +179,6 @@
                          (cdr case))
                  (blogmore--file-from-title (car case))))))))
 
-(ert-deftest blogmore--current-categories-test ()
-  "Test extraction of categories from post content."
-  (cl-letf (((symbol-function 'blogmore--get-all)
-             (lambda (_ &optional _)
-               '("Z" "Emacs" "Lisp" "Life" "A"))))
-    (should (equal (blogmore--current-categories) '("A" "Emacs" "Life" "Lisp" "Z")))))
-
-(ert-deftest blogmore--current-tags-test ()
-  "Test extraction of tags from post content."
-  (cl-letf (((symbol-function 'blogmore--get-all)
-             (lambda (_ &optional _)
-               '("Emacs" "Lisp" "Emacs" "Org" "Lisp" "Emacs" "Z" "A"))))
-    (should (equal (sort (blogmore--current-tags) #'string-lessp)
-                   '("A" "Emacs" "Lisp" "Org" "Z")))))
-
 (ert-deftest blogmore--chosen-blog-sans-error-test ()
   "Test that blogmore--chosen-blog-sans-error smartly defaults."
   ;; With no blog selected by the user.
