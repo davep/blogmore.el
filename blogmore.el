@@ -664,7 +664,9 @@ If an image is found the return value is a list of the form:
 (defun blogmore--post-tags ()
   "Get the tags for the current post as a list."
   (when-let ((tags (blogmore-get-frontmatter "tags")))
-    (string-split tags "," t " ")))
+    (if (stringp tags)
+        (string-split tags "," t " ")
+      tags)))
 
 ;;;###autoload
 (defun blogmore-set-series (series)
@@ -678,13 +680,11 @@ If an image is found the return value is a list of the form:
   (interactive (blogmore--with "Tag" (blogmore--current-tags)))
   (blogmore-set-frontmatter
    "tags"
-   (string-join
-    (seq-uniq
-     ;; Sorting *before* making unique because I want to favour upper-case
-     ;; over lower-case in the resulting list of tags.
-     (sort (append (blogmore--post-tags) (list tag)) #'string-lessp)
-     #'string-equal-ignore-case)
-    ", "))
+   (seq-uniq
+    ;; Sorting *before* making unique because I want to favour upper-case
+    ;; over lower-case in the resulting list of tags.
+    (sort (append (blogmore--post-tags) (list tag)) #'string-lessp)
+    #'string-equal-ignore-case))
   (message "Added tag '%s'" tag)
   (when transient-current-prefix
     (call-interactively #'blogmore-add-tag)))
@@ -696,7 +696,7 @@ If an image is found the return value is a list of the form:
    (list (when-let (tags (blogmore--post-tags))
            (completing-read "Tag to remove: " tags nil t))))
   (when tag
-    (blogmore-set-frontmatter "tags" (string-join (remove tag (blogmore--post-tags)) ", "))
+    (blogmore-set-frontmatter "tags" (remove tag (blogmore--post-tags)))
     (message "Removed tag '%s'" tag)
     (when transient-current-prefix
       (call-interactively #'blogmore-remove-tag))))
