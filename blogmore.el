@@ -839,9 +839,9 @@ If an image is found the return value is a list of the form:
     ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--blog-post-p)
     ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--blog-post-p)
     ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
+    ("T" "Remove tag" blogmore-remove-tag :inapt-if-not (lambda () (and (blogmore--blog-post-p) (blogmore--post-tags))))
     ("s" "Add series" blogmore-add-series :inapt-if-not blogmore--blog-post-p)
-    ("S" "Remove series" blogmore-remove-series :inapt-if-not blogmore--blog-post-p)
-    ("T" "Remove tag" blogmore-remove-tag :inapt-if-not blogmore--blog-post-p)
+    ("S" "Remove series" blogmore-remove-series :inapt-if-not (lambda () (and (blogmore--blog-post-p) (blogmore--post-series))))
     ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
     ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)]
    ["Links"
