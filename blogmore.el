@@ -5,7 +5,7 @@
 ;; Version: 4.7.0
 ;; Keywords: convenience
 ;; URL: https://github.com/davep/blogmore.el
-;; Package-Requires: ((emacs "29.1"))
+;; Package-Requires: ((emacs "29.1") (yaml "1.2.4"))
 
 ;; This program is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the
@@ -41,6 +41,7 @@
 (require 'subr-x)
 (require 'transient)
 (require 'ucs-normalize)
+(require 'yaml)
 
 
 (defclass blogmore-blog ()
@@ -143,42 +144,32 @@ frontmatter is found, return nil."
         (when (re-search-forward blogmore--frontmatter-marker-regexp nil t)
           (cons start (match-beginning 0)))))))
 
-(cl-defstruct blogmore--frontmatter-property-location
-  "A struct representing the location of a property in the frontmatter."
-  (start nil :documentation "The position of the start of the property's value.")
-  (end nil :documentation "The position of the end of the property's value.")
-  (value nil :documentation "The current value of the property."))
-
-(defun blogmore--locate-frontmatter (property)
-  "Locate the line for PROPERTY in the frontmatter.
-
-If the property is found, return an instance of
-`blogmore--frontmatter-property-location' with the start, end, and value
-of the property. If the property is not found, return nil.
-
-If the property is found `point' is left at the beginning of the value.
-If the property is not found, `point' is left at the end of the
-frontmatter.
-
-If there are no frontmatter markers, return nil and leave `point`
-unchanged."
+(defun blogmore--frontmatter ()
+  "Return the frontmatter as a YAML object, or nil if no frontmatter is found."
   (when-let ((bounds (blogmore--frontmatter-bounds)))
-    (with-restriction (car bounds) (cdr bounds)
-      (goto-char (point-min))
-      (if (re-search-forward (rx bol (literal property) ":") nil t)
-          (make-blogmore--frontmatter-property-location
-           :start (point)
-           :end (line-end-position)
-           :value (string-trim
-                   (buffer-substring-no-properties
-                    (point)
-                    (line-end-position))))
-        (ignore (goto-char (point-max)))))))
+    (yaml-parse-string
+     (buffer-substring-no-properties (car bounds) (cdr bounds))
+     :false-object nil
+     :null-object nil
+     :object-key-type 'string
+     :object-type 'alist
+     :sequence-type 'list)))
+
+(gv-define-setter blogmore--frontmatter (new-frontmatter)
+  "Set the frontmatter of the current buffer to NEW-FRONTMATTER."
+  (let ((frontmatter (gensym "new-frontmatter-")))
+    `(let ((bounds (blogmore--frontmatter-bounds))
+           (,frontmatter ,new-frontmatter))
+       (if bounds
+           (replace-region-contents
+            (car bounds) (cdr bounds)
+            (lambda ()
+              (concat (yaml-encode ,frontmatter) "\n")))
+         (error "No frontmatter bounds found to update")))))
 
 (defun blogmore--frontmatter-p (property)
   "Return non-nil if PROPERTY exists in the frontmatter."
-  (save-excursion
-    (blogmore--locate-frontmatter property)))
+  (assoc property (blogmore--frontmatter)))
 
 
 ;; Public utility macros and functions.
@@ -188,7 +179,7 @@ unchanged."
   (declare (indent 1))
   `(with-temp-buffer
      (insert-file-contents ,post-file)
-      ,@body))
+     ,@body))
 
 (defun blogmore-clean-time-string (time-string)
   "Clean TIME-STRING to the format YYYY-MM-DDTHH:MM:SS+NNNN.
@@ -226,11 +217,12 @@ that can be parsed."
     ;; by the previous step.
     (replace-regexp-in-string (rx (or (seq bol "-") (seq "-" eol))) "")))
 
-(defun blogmore-get-frontmatter (property)
-  "Get the value of PROPERTY from the frontmatter, or nil if it doesn't exist."
-  (save-excursion
-    (when-let ((location (blogmore--locate-frontmatter property)))
-      (blogmore--frontmatter-property-location-value location))))
+(defun blogmore-get-frontmatter (property &optional frontmatter)
+  "Get the value of PROPERTY from the frontmatter, or nil if it doesn't exist.
+
+If FRONTMATTER is provided, it is used instead of parsing the
+frontmatter from the buffer."
+  (cdr (assoc property (or frontmatter (blogmore--frontmatter)))))
 
 (defun blogmore-set-frontmatter (property value)
   "Set the value of PROPERTY in the frontmatter to VALUE.
@@ -239,15 +231,11 @@ If a frontmatter section can't be found in the current buffer, the
 function returns nil, otherwise PROPERTY is set to VALUE and the
 function returns t."
   (when (blogmore--frontmatter-bounds)
-    (save-excursion
-      (if-let ((location (blogmore--locate-frontmatter property)))
-          (progn
-            (goto-char (blogmore--frontmatter-property-location-start location))
-            (kill-region (point) (line-end-position))
-            (insert (format " %s" value)))
-        (beginning-of-line)
-        (insert (format "%s: %s\n" property value)))
-      t)))
+    (let ((frontmatter (blogmore--frontmatter)))
+      (if-let ((existing (assoc-string property frontmatter)))
+          (setf (cdr existing) value)
+        (setf frontmatter (append frontmatter (list (cons property value)))))
+      (setf (blogmore--frontmatter) frontmatter))))
 
 (defun blogmore-remove-frontmatter (property)
   "Remove PROPERTY from the frontmatter.
@@ -257,12 +245,8 @@ function returns nil, otherwise PROPERTY is removed and the function
 returns t. In the event that PROPERTY is not found, the function returns
 t and the buffer is left unchanged."
   (when (blogmore--frontmatter-bounds)
-    (save-excursion
-      (when-let ((location (blogmore--locate-frontmatter property)))
-        (goto-char (blogmore--frontmatter-property-location-start location))
-        (delete-region (line-beginning-position) (line-end-position))
-        (kill-line)))
-    t))
+    (let ((frontmatter (blogmore--frontmatter)))
+      (setf (blogmore--frontmatter) (assoc-delete-all property frontmatter)))))
 
 (defun blogmore-toggle-frontmatter (property &optional remove-false)
   "Toggle the existence of boolean PROPERTY in the frontmatter.
@@ -277,7 +261,7 @@ function returns nil, otherwise the property is toggled and the function
 returns t."
   (if (and
        (blogmore--frontmatter-p property)
-       (string-equal-ignore-case (blogmore-get-frontmatter property) "true"))
+       (blogmore-get-frontmatter property))
       (if remove-false
           (blogmore-remove-frontmatter property)
         (blogmore-set-frontmatter property "false"))
@@ -304,6 +288,17 @@ returns t."
 (defcustom blogmore-blogs nil
   "A list of blogs to work with."
   :type `(repeat (object :class blogmore-blog :value ,(blogmore-blog)))
+  :group 'blogmore)
+
+(defcustom blogmore-command "blogmore"
+  "The command to run BlogMore operations that require the command-line tool.
+
+If BlogMore is installed and in your path the default setting should be
+fine. However, if you have multiple versions of BlogMore installed, or
+possibly have virtual environments appearing in the variable
+`exec-path', this might cause problems. If so you can set this to point
+to a specific instance of BlogMore."
+  :type '(file :must-match t)
   :group 'blogmore)
 
 (defcustom blogmore-new-post-hook nil
@@ -393,6 +388,7 @@ a new blog post."
 
 (defmacro blogmore--within-post (&rest body)
   "Execute BODY within a blog post, or signal an error if we're not in a blog post."
+  (declare (indent 0))
   `(if (blogmore--blog-post-p)
        (progn ,@body)
      (user-error "This doesn't look like a blog post")))
@@ -471,61 +467,54 @@ to select a blog to work on first."
    (file-name-as-directory (blogmore--post-directory))
    (funcall (blogmore--post-file-name-from-title-function) title)))
 
-(defun blogmore--property-getter (property &optional separator)
-  "Generate a function to match PROPERTY in a string and return its value.
+(defun blogmore--list-of (property)
+  "Get the PROPERTY list from BlogMore."
+  (unless (executable-find blogmore-command)
+    (user-error
+     "The 'blogmore' command-line tool is required for this operation; https://blogmore.davep.dev/"))
+  (let* ((command (format "%s dump %s %s 2> %s"
+                          (shell-quote-argument (expand-file-name blogmore-command))
+                          (shell-quote-argument property)
+                          (shell-quote-argument (expand-file-name (blogmore--posts-directory)))
+                          (shell-quote-argument (null-device))))
+         (data (shell-command-to-string command)))
+    (when (string-empty-p data)
+      (user-error "%s did not return any data for %s" command property))
+    (mapcar #'cadr
+            (condition-case parse-error
+                (json-parse-string data :array-type 'list)
+              (error
+               (user-error
+                "Error parsing output from %s -- %s"
+                command
+                (error-message-string parse-error)))))))
 
-If SEPARATOR is provided, split the values using SEPARATOR, returning a
-list of lists of values."
-  (lambda (candidate)
-    (when (string-match
-           (rx
-            bol (literal property) ":"
-            (zero-or-more space)
-            (group (zero-or-more any))
-            eol)
-           candidate)
-      (let ((value (string-trim (match-string 1 candidate))))
-        (if separator
-            (split-string value separator t " ")
-          value)))))
-
-(defun blogmore--get-all (property &optional separator)
-  "Get a list of all values for PROPERTY from existing posts.
-
-If SEPARATOR is provided, split the values using SEPARATOR and flatten
-the resulting list, returning a list of all values."
-  (seq-remove
-   #'string-empty-p
-   (funcall
-    (if separator #'flatten-list #'identity)
-    (mapcar
-     (blogmore--property-getter property separator)
-     (seq-uniq
-      (split-string
-       (shell-command-to-string
-        (format
-         (if (executable-find "rg")
-             "rg --no-filename --no-line-number --no-heading \"^%1$s:\" \"%2$s\" -g \"*.md\""
-           "find \"%2$s\" -type f -name \"*.md\" -exec grep -hi \"^%1$s:\" /dev/null {} +")
-         property (expand-file-name (blogmore--posts-directory))))
-       "\n" t)
-      #'string-equal-ignore-case)))))
+(defvar blogmore--current-categories-cache nil
+  "Cache for the list of categories from existing posts.")
 
 (defun blogmore--current-categories ()
   "Get a list of categories from existing posts."
-  (sort (delq nil (blogmore--get-all "category")) #'string-lessp))
+  (or
+   blogmore--current-categories-cache
+   (setq blogmore--current-categories-cache (blogmore--list-of "categories"))))
+
+(defvar blogmore--current-tags-cache nil
+  "Cache for the list of tags from existing posts.")
 
 (defun blogmore--current-tags ()
   "Get a list of tags from existing posts."
-  (seq-uniq
-   ;; Sorting *before* making unique because I want to favour upper-case
-   ;; over lower-case in the resulting set.
-   (sort (blogmore--get-all "tags" ",") #'string-lessp)
-   #'string-equal-ignore-case))
+  (or
+   blogmore--current-tags-cache
+   (setq blogmore--current-tags-cache (blogmore--list-of "tags"))))
+
+(defvar blogmore--current-series-cache nil
+  "Cache for the list of series from existing posts.")
 
 (defun blogmore--current-series ()
   "Get a list of series from existing posts."
-  (sort (delq nil (blogmore--get-all "series")) #'string-lessp))
+  (or
+   blogmore--current-series-cache
+   (setq blogmore--current-series-cache (blogmore--list-of "series"))))
 
 (defun blogmore--post-picker ()
   "Pick a post from the list of existing posts."
@@ -543,10 +532,10 @@ the resulting list, returning a list of all values."
 (defun blogmore--with (prompt existing-values)
   "Prompt the user with PROMPT and offer EXISTING-VALUES as completions."
   (blogmore--within-post
-   (list
-    (completing-read
-     (format "%s from %s: " prompt (blogmore--blog-title))
-     existing-values))))
+    (list
+     (completing-read
+      (format "%s from %s: " prompt (blogmore--blog-title))
+      existing-values))))
 
 (defsubst blogmore--image-extension (image)
   "Get the extension of IMAGE, or nil if it doesn't have one."
@@ -600,6 +589,14 @@ If an image is found the return value is a list of the form:
 ;; Commands:
 
 ;;;###autoload
+(defun blogmore-clear-caches ()
+  "Clear the caches for categories, tags, and series, etc."
+  (interactive)
+  (setq blogmore--current-categories-cache nil
+        blogmore--current-tags-cache nil
+        blogmore--current-series-cache nil))
+
+;;;###autoload
 (defun blogmore-work-on (blog)
   "Set the current blog to BLOG."
   (interactive (list (completing-read "Blog: " (mapcar #'blogmore-blog-title blogmore-blogs) nil t)))
@@ -608,6 +605,7 @@ If an image is found the return value is a list of the form:
          (lambda (candidate)
            (string= (blogmore-blog-title candidate) blog))
          blogmore-blogs))
+  (blogmore-clear-caches)
   (message "Now working on %s" blog)
   (when transient-current-prefix
     (call-interactively #'blogmore)))
@@ -636,28 +634,28 @@ If an image is found the return value is a list of the form:
   "Toggle the draft status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "draft" t)))
+    (blogmore-toggle-frontmatter "draft" t)))
 
 ;;;###autoload
 (defun blogmore-toggle-invite-comments ()
   "Toggle the invite-comments status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "invite_comments")))
+    (blogmore-toggle-frontmatter "invite_comments")))
 
 ;;;###autoload
 (defun blogmore-toggle-show-toc ()
   "Toggle the show-toc status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "show_toc")))
+    (blogmore-toggle-frontmatter "show_toc")))
 
 ;;;###autoload
 (defun blogmore-toggle-show-toc-inline ()
   "Toggle the show-toc-inline status of the post."
   (interactive)
   (blogmore--within-post
-   (blogmore-toggle-frontmatter "show_toc_inline")))
+    (blogmore-toggle-frontmatter "show_toc_inline")))
 
 ;;;###autoload
 (defun blogmore-invite-comments-to (address)
@@ -675,16 +673,44 @@ If an image is found the return value is a list of the form:
   (interactive (blogmore--with "Category" (blogmore--current-categories)))
   (blogmore-set-frontmatter "category" category))
 
+(defun blogmore--post-series ()
+  "Get the series for the current post as a list."
+  (when-let ((series (blogmore-get-frontmatter "series")))
+    (if (stringp series)
+        (string-split series "," t " ")
+      series)))
+
+;;;###autoload
+(defun blogmore-add-series (series)
+  "Add SERIES to the post's series."
+  (interactive (blogmore--with "Series" (blogmore--current-series)))
+  (blogmore-set-frontmatter
+   "series"
+   (seq-uniq
+    ;; Sorting *before* making unique because I want to favour upper-case
+    ;; over lower-case in the resulting list of series.
+    (sort (append (blogmore--post-series) (list series)) #'string-lessp)
+    #'string-equal-ignore-case))
+  (message "Added series '%s'" series))
+
+;;;###autoload
+(defun blogmore-remove-series (series)
+  "Remove SERIES from the post's series."
+  (interactive
+   (list (when-let (series (blogmore--post-series))
+           (completing-read "Series to remove: " series nil t))))
+  (when series
+    (if-let ((remaining-series (remove series (blogmore--post-series))))
+        (blogmore-set-frontmatter "series" remaining-series)
+      (blogmore-remove-frontmatter "series"))
+    (message "Removed series '%s'" series)))
+
 (defun blogmore--post-tags ()
   "Get the tags for the current post as a list."
   (when-let ((tags (blogmore-get-frontmatter "tags")))
-    (string-split tags "," t " ")))
-
-;;;###autoload
-(defun blogmore-set-series (series)
-  "Set the series of the post to SERIES."
-  (interactive (blogmore--with "Series" (blogmore--current-series)))
-  (blogmore-set-frontmatter "series" series))
+    (if (stringp tags)
+        (string-split tags "," t " ")
+      tags)))
 
 ;;;###autoload
 (defun blogmore-add-tag (tag)
@@ -692,13 +718,11 @@ If an image is found the return value is a list of the form:
   (interactive (blogmore--with "Tag" (blogmore--current-tags)))
   (blogmore-set-frontmatter
    "tags"
-   (string-join
-    (seq-uniq
-     ;; Sorting *before* making unique because I want to favour upper-case
-     ;; over lower-case in the resulting list of tags.
-     (sort (append (blogmore--post-tags) (list tag)) #'string-lessp)
-     #'string-equal-ignore-case)
-    ", "))
+   (seq-uniq
+    ;; Sorting *before* making unique because I want to favour upper-case
+    ;; over lower-case in the resulting list of tags.
+    (sort (append (blogmore--post-tags) (list tag)) #'string-lessp)
+    #'string-equal-ignore-case))
   (message "Added tag '%s'" tag)
   (when transient-current-prefix
     (call-interactively #'blogmore-add-tag)))
@@ -710,7 +734,9 @@ If an image is found the return value is a list of the form:
    (list (when-let (tags (blogmore--post-tags))
            (completing-read "Tag to remove: " tags nil t))))
   (when tag
-    (blogmore-set-frontmatter "tags" (string-join (remove tag (blogmore--post-tags)) ", "))
+    (if-let ((remaining-tags (remove tag (blogmore--post-tags))))
+        (blogmore-set-frontmatter "tags" remaining-tags)
+      (blogmore-remove-frontmatter "tags"))
     (message "Removed tag '%s'" tag)
     (when transient-current-prefix
       (call-interactively #'blogmore-remove-tag))))
@@ -790,10 +816,13 @@ If an image is found the return value is a list of the form:
   "Copy the category and tags from POST to the current post."
   (interactive (blogmore--post-picker))
   (blogmore--within-post
-   (when-let ((category (blogmore-with-post post (blogmore-get-frontmatter "category"))))
-     (blogmore-set-category category)))
-   (when-let ((tags (blogmore-with-post post (blogmore-get-frontmatter "tags"))))
-     (blogmore-set-frontmatter "tags" tags)))
+    (let ((frontmatter (blogmore-with-post post (blogmore--frontmatter))))
+      (when-let ((category (blogmore-get-frontmatter "category" frontmatter)))
+        (blogmore-set-category category))
+      (when-let ((tags (blogmore-get-frontmatter "tags" frontmatter)))
+        (blogmore-set-frontmatter "tags" tags))
+      (when-let ((series (blogmore-get-frontmatter "series" frontmatter)))
+        (blogmore-set-frontmatter "series" series)))))
 
 ;;;###autoload
 (transient-define-prefix blogmore ()
@@ -814,10 +843,9 @@ If an image is found the return value is a list of the form:
     ("d" "Toggle draft status" blogmore-toggle-draft :inapt-if-not blogmore--blog-post-p)
     ("c" "Set post category" blogmore-set-category :inapt-if-not blogmore--blog-post-p)
     ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
-    ("s" "Set series" blogmore-set-series :inapt-if-not blogmore--blog-post-p)
-    ("T" "Remove tag" blogmore-remove-tag :inapt-if-not blogmore--blog-post-p)
-    ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
-    ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)]
+    ("T" "Remove tag" blogmore-remove-tag :inapt-if-not (lambda () (and (blogmore--blog-post-p) (blogmore--post-tags))))
+    ("s" "Add series" blogmore-add-series :inapt-if-not blogmore--blog-post-p)
+    ("S" "Remove series" blogmore-remove-series :inapt-if-not (lambda () (and (blogmore--blog-post-p) (blogmore--post-series))))]
    ["Links"
     ("l c" "Link to a category" blogmore-link-category :inapt-if-not blogmore--blog-post-p)
     ("l p" "Link to a post" blogmore-link-post :inapt-if-not blogmore--blog-post-p)
@@ -828,10 +856,13 @@ If an image is found the return value is a list of the form:
     ("i c" "Toggle image centre at point" blogmore-toggle-image-centre :inapt-if-not blogmore--image-at-point)
     ("i s" "Set image at point as cover" blogmore-set-as-cover :inapt-if-not blogmore--image-at-point)]
    ["Other"
+    ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
+    ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)
     ("C t" "Toggle invite comments" blogmore-toggle-invite-comments :inapt-if-not blogmore--blog-post-p)
     ("C a" "Comments to address" blogmore-invite-comments-to :inapt-if-not blogmore--blog-post-p)
     ("o s" "Toggle show ToC" blogmore-toggle-show-toc :inapt-if-not blogmore--blog-post-p)
-    ("o i" "Toggle show ToC inline" blogmore-toggle-show-toc-inline :inapt-if-not blogmore--blog-post-p)]])
+    ("o i" "Toggle show ToC inline" blogmore-toggle-show-toc-inline :inapt-if-not blogmore--blog-post-p)
+    ("x c" "Clear caches" blogmore-clear-caches)]])
 
 (provide 'blogmore)
 
