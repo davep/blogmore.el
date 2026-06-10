@@ -17,7 +17,6 @@ allow it to be used with a wide variety of different setups.
 
 `blogmore.el` is probably best installed with `use-package`, for example:
 
-
 ```elisp
 (use-package blogmore
   :ensure t
@@ -61,13 +60,7 @@ as of the time of writing:
 and you can always see the latest approach I'm using [in my Emacs
 configuration](https://github.com/davep/.emacs.d/blob/main/init.d/packages.d/personal/blogmore.el).
 
-## Assumptions
-
-While, as I say above, I've tried to make it as configurable as possible,
-there are still some assumptions made and if your blog or posts don't match
-these then `blogmore.el` might not work so well for you.
-
-### Post dates
+## Assumption about post date format
 
 It is assumed that your post dates will be something akin to ISO8601 format.
 So ideally something like:
