@@ -845,9 +845,7 @@ If an image is found the return value is a list of the form:
     ("t" "Add tag" blogmore-add-tag :inapt-if-not blogmore--blog-post-p)
     ("T" "Remove tag" blogmore-remove-tag :inapt-if-not (lambda () (and (blogmore--blog-post-p) (blogmore--post-tags))))
     ("s" "Add series" blogmore-add-series :inapt-if-not blogmore--blog-post-p)
-    ("S" "Remove series" blogmore-remove-series :inapt-if-not (lambda () (and (blogmore--blog-post-p) (blogmore--post-series))))
-    ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
-    ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)]
+    ("S" "Remove series" blogmore-remove-series :inapt-if-not (lambda () (and (blogmore--blog-post-p) (blogmore--post-series))))]
    ["Links"
     ("l c" "Link to a category" blogmore-link-category :inapt-if-not blogmore--blog-post-p)
     ("l p" "Link to a post" blogmore-link-post :inapt-if-not blogmore--blog-post-p)
@@ -858,6 +856,8 @@ If an image is found the return value is a list of the form:
     ("i c" "Toggle image centre at point" blogmore-toggle-image-centre :inapt-if-not blogmore--image-at-point)
     ("i s" "Set image at point as cover" blogmore-set-as-cover :inapt-if-not blogmore--image-at-point)]
    ["Other"
+    ("u d" "Update date" blogmore-update-date :inapt-if-not blogmore--blog-post-p)
+    ("u m" "Update modified date" blogmore-update-modified :inapt-if-not blogmore--blog-post-p)
     ("C t" "Toggle invite comments" blogmore-toggle-invite-comments :inapt-if-not blogmore--blog-post-p)
     ("C a" "Comments to address" blogmore-invite-comments-to :inapt-if-not blogmore--blog-post-p)
     ("o s" "Toggle show ToC" blogmore-toggle-show-toc :inapt-if-not blogmore--blog-post-p)
