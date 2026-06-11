@@ -149,8 +149,6 @@ frontmatter is found, return nil."
   (when-let ((bounds (blogmore--frontmatter-bounds)))
     (yaml-parse-string
      (buffer-substring-no-properties (car bounds) (cdr bounds))
-     :false-object nil
-     :null-object nil
      :object-key-type 'string
      :object-type 'alist
      :sequence-type 'list)))
@@ -261,7 +259,7 @@ function returns nil, otherwise the property is toggled and the function
 returns t."
   (if (and
        (blogmore--frontmatter-p property)
-       (blogmore-get-frontmatter property))
+       (not (eq (blogmore-get-frontmatter property) :false)))
       (if remove-false
           (blogmore-remove-frontmatter property)
         (blogmore-set-frontmatter property "false"))
