@@ -93,12 +93,12 @@
     (with-temp-buffer
       (insert "---\ntitle: Test\nother: false\n---\n\nContent")
       (should (blogmore-toggle-frontmatter "test"))
-      (should (equal (blogmore-get-frontmatter "test") t))
+      (should (blogmore-get-frontmatter "test"))
       (should (blogmore-toggle-frontmatter "test"))
-      (should (equal (blogmore-get-frontmatter "test") nil))
-      (should (equal (blogmore-get-frontmatter "other") nil))
+      (should (equal (blogmore-get-frontmatter "test") :false))
+      (should (equal (blogmore-get-frontmatter "other") :false))
       (should (blogmore-toggle-frontmatter "other"))
-      (should (equal (blogmore-get-frontmatter "other") t)))
+      (should (blogmore-get-frontmatter "other")))
     (with-temp-buffer
       (insert "No frontmatter here")
       (should-not (blogmore-toggle-frontmatter "test")))))
@@ -112,9 +112,9 @@
       (should (blogmore-get-frontmatter "test"))
       (should (blogmore-toggle-frontmatter "test" t))
       (should-not (blogmore-get-frontmatter "test"))
-      (should-not (blogmore-get-frontmatter "other"))
+      (should (equal (blogmore-get-frontmatter "other") :false))
       (should (blogmore-toggle-frontmatter "other" t))
-      (should (equal (blogmore-get-frontmatter "other") t)))
+      (should (blogmore-get-frontmatter "other")))
     (with-temp-buffer
       (insert "No frontmatter here")
       (should-not (blogmore-toggle-frontmatter "test" t)))))
