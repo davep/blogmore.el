@@ -227,7 +227,10 @@ that can be parsed."
 
 If FRONTMATTER is provided, it is used instead of parsing the
 frontmatter from the buffer."
-  (cdr (assoc property (or frontmatter (blogmore--frontmatter)))))
+  (let ((value (cdr (assoc property (or frontmatter (blogmore--frontmatter))))))
+    (if (eq value :null)
+        nil
+      value)))
 
 (defun blogmore-set-frontmatter (property value)
   "Set the value of PROPERTY in the frontmatter to VALUE.
