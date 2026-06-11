@@ -1,6 +1,7 @@
-(require 'ert)
-(require 'cl-lib)
 (require 'blogmore)
+(require 'cl-lib)
+(require 'ert)
+(require 'ucs-normalize)
 
 (defconst blogmore--test-titles
   '(("" . "")
