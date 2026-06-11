@@ -34,13 +34,8 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl-lib))
-(require 'eieio-custom)
 (require 'parse-time)
-(require 'subr-x)
 (require 'transient)
-(require 'ucs-normalize)
 (require 'yaml)
 
 
