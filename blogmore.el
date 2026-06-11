@@ -494,32 +494,20 @@ to select a blog to work on first."
                 command
                 (error-message-string parse-error)))))))
 
-(defvar blogmore--current-categories-cache nil
-  "Cache for the list of categories from existing posts.")
+(defmacro blogmore--cache-dump (dump-name)
+  "Generate a function to get DUMP-NAME from BlogMore, with caching."
+  (let ((cache-name (intern (format "blogmore--current-%s-cache" dump-name)))
+        (getter-name (intern (format "blogmore--current-%s" dump-name))))
+    `(progn
+       (defvar ,cache-name nil
+         ,(format "Cache for the list of %s from existing posts." dump-name))
+       (defun ,getter-name ()
+         ,(format "Get a list of %s from existing posts." dump-name)
+         (or ,cache-name (setq ,cache-name (blogmore--list-of ,(symbol-name dump-name))))))))
 
-(defun blogmore--current-categories ()
-  "Get a list of categories from existing posts."
-  (or
-   blogmore--current-categories-cache
-   (setq blogmore--current-categories-cache (blogmore--list-of "categories"))))
-
-(defvar blogmore--current-tags-cache nil
-  "Cache for the list of tags from existing posts.")
-
-(defun blogmore--current-tags ()
-  "Get a list of tags from existing posts."
-  (or
-   blogmore--current-tags-cache
-   (setq blogmore--current-tags-cache (blogmore--list-of "tags"))))
-
-(defvar blogmore--current-series-cache nil
-  "Cache for the list of series from existing posts.")
-
-(defun blogmore--current-series ()
-  "Get a list of series from existing posts."
-  (or
-   blogmore--current-series-cache
-   (setq blogmore--current-series-cache (blogmore--list-of "series"))))
+(blogmore--cache-dump categories)
+(blogmore--cache-dump tags)
+(blogmore--cache-dump series)
 
 (defun blogmore--post-picker ()
   "Pick a post from the list of existing posts."
