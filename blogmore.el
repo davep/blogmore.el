@@ -162,7 +162,14 @@ frontmatter is found, return nil."
            (replace-region-contents
             (car bounds) (cdr bounds)
             (lambda ()
-              (concat (yaml-encode ,frontmatter) "\n")))
+              (concat
+               (yaml-encode
+                (seq-filter
+                 (lambda (property)
+                   (when-let (value (cdr property))
+                     (not (eq value :null))))
+                 ,frontmatter))
+               "\n")))
          (error "No frontmatter bounds found to update")))))
 
 (defun blogmore--frontmatter-p (property)
@@ -698,9 +705,7 @@ If an image is found the return value is a list of the form:
    (list (when-let (series (blogmore--post-series))
            (completing-read "Series to remove: " series nil t))))
   (when series
-    (if-let ((remaining-series (remove series (blogmore--post-series))))
-        (blogmore-set-frontmatter "series" remaining-series)
-      (blogmore-remove-frontmatter "series"))
+    (blogmore-set-frontmatter "series" (remove series (blogmore--post-series)))
     (message "Removed series '%s'" series)))
 
 (defun blogmore--post-tags ()
@@ -732,9 +737,7 @@ If an image is found the return value is a list of the form:
    (list (when-let (tags (blogmore--post-tags))
            (completing-read "Tag to remove: " tags nil t))))
   (when tag
-    (if-let ((remaining-tags (remove tag (blogmore--post-tags))))
-        (blogmore-set-frontmatter "tags" remaining-tags)
-      (blogmore-remove-frontmatter "tags"))
+    (blogmore-set-frontmatter "tags" (remove tag (blogmore--post-tags)))
     (message "Removed tag '%s'" tag)
     (when transient-current-prefix
       (call-interactively #'blogmore-remove-tag))))
