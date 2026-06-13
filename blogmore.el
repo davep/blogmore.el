@@ -34,6 +34,7 @@
 
 ;;; Code:
 
+(require 'eieio-custom)
 (require 'parse-time)
 (require 'transient)
 (require 'yaml)
@@ -97,6 +98,13 @@
     :custom (choice (const :tag "Default") function)
     :label "Tag Maker Function"
     :documentation "A function for making a tag's URL")
+   (series-maker-function
+    :initarg :series-maker-function
+    :initform nil
+    :type (or null function)
+    :custom (choice (const :tag "Default") function)
+    :label "Series Maker Function"
+    :documentation "A function for making a series' URL")
    (post-link-format
     :initarg :post-link-format
     :initform nil
@@ -117,7 +125,14 @@
     :type (or null string)
     :custom (choice (const :tag "Default") string)
     :label "Tag Link Format"
-    :documentation "Format string for a link to a tag"))
+    :documentation "Format string for a link to a tag")
+   (series-link-format
+    :initarg :series-link-format
+    :initform nil
+    :type (or null string)
+    :custom (choice (const :tag "Default") string)
+    :label "Series Link Format"
+    :documentation "Format string for a link to a series"))
   :documentation "A class representing the settings for a single blog.")
 
 
@@ -368,6 +383,11 @@ a new blog post."
   :type 'function
   :group 'blogmore)
 
+(defcustom blogmore-default-series-maker-function #'blogmore-slug
+  "Default function to generate a slug for a series."
+  :type 'function
+  :group 'blogmore)
+
 (defcustom blogmore-default-post-link-format "/%s.html"
   "Default format string for a link to a blog post."
   :type 'string
@@ -380,6 +400,11 @@ a new blog post."
 
 (defcustom blogmore-default-tag-link-format "/tag/%s/"
   "Default format string for a link to a tag."
+  :type 'string
+  :group 'blogmore)
+
+(defcustom blogmore-default-series-link-format "/series/%s/"
+  "Default format string for a link to a series."
   :type 'string
   :group 'blogmore)
 
@@ -438,9 +463,11 @@ to select a blog to work on first."
 (blogmore--setting post-maker-function)
 (blogmore--setting category-maker-function)
 (blogmore--setting tag-maker-function)
+(blogmore--setting series-maker-function)
 (blogmore--setting post-link-format)
 (blogmore--setting category-link-format)
 (blogmore--setting tag-link-format)
+(blogmore--setting series-link-format)
 
 (defun blogmore--now ()
   "Return the current date and time as a string."
@@ -769,6 +796,16 @@ If an image is found the return value is a list of the form:
     (insert tag)))
 
 ;;;###autoload
+(defun blogmore-link-series (series)
+  "Insert a link to SERIES on my blog."
+  (interactive (blogmore--with "Series" (blogmore--current-series)))
+  (blogmore--insert-link
+   (format (blogmore--series-link-format)
+           (funcall (blogmore--series-maker-function) series)))
+  (save-excursion
+    (insert series)))
+
+;;;###autoload
 (defun blogmore-toggle-image-centre ()
   "Toggle whether the image at `point' is centred or not."
   (interactive)
@@ -836,6 +873,7 @@ If an image is found the return value is a list of the form:
    ["Links"
     ("l c" "Link to a category" blogmore-link-category :inapt-if-not blogmore--blog-post-p)
     ("l p" "Link to a post" blogmore-link-post :inapt-if-not blogmore--blog-post-p)
+    ("l s" "Link to a series" blogmore-link-series :inapt-if-not blogmore--blog-post-p)
     ("l t" "Link to a tag" blogmore-link-tag :inapt-if-not blogmore--blog-post-p)
     ""
     "Images"
