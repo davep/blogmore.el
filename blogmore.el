@@ -98,6 +98,13 @@
     :custom (choice (const :tag "Default") function)
     :label "Tag Maker Function"
     :documentation "A function for making a tag's URL")
+   (series-maker-function
+    :initarg :series-maker-function
+    :initform nil
+    :type (or null function)
+    :custom (choice (const :tag "Default") function)
+    :label "Series Maker Function"
+    :documentation "A function for making a series' URL")
    (post-link-format
     :initarg :post-link-format
     :initform nil
@@ -376,6 +383,11 @@ a new blog post."
   :type 'function
   :group 'blogmore)
 
+(defcustom blogmore-default-series-maker-function #'blogmore-slug
+  "Default function to generate a slug for a series."
+  :type 'function
+  :group 'blogmore)
+
 (defcustom blogmore-default-post-link-format "/%s.html"
   "Default format string for a link to a blog post."
   :type 'string
@@ -451,6 +463,7 @@ to select a blog to work on first."
 (blogmore--setting post-maker-function)
 (blogmore--setting category-maker-function)
 (blogmore--setting tag-maker-function)
+(blogmore--setting series-maker-function)
 (blogmore--setting post-link-format)
 (blogmore--setting category-link-format)
 (blogmore--setting tag-link-format)
@@ -788,7 +801,7 @@ If an image is found the return value is a list of the form:
   (interactive (blogmore--with "Series" (blogmore--current-series)))
   (blogmore--insert-link
    (format (blogmore--series-link-format)
-           (funcall (blogmore--tag-maker-function) series)))
+           (funcall (blogmore--series-maker-function) series)))
   (save-excursion
     (insert series)))
 
