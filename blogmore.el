@@ -34,6 +34,7 @@
 
 ;;; Code:
 
+(require 'eieio-custom)
 (require 'parse-time)
 (require 'transient)
 (require 'yaml)
