@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require 'blogmore)
 (require 'cl-lib)
 (require 'ert)
