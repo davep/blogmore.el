@@ -325,8 +325,8 @@ to a specific instance of BlogMore."
   :group 'blogmore)
 
 (defcustom blogmore-default-post-template "---
-title: %1$s
-date: %2$s
+title: \"%1$s\"
+date: \"%2$s\"
 category:
 tags:
 ---\n\n\n\n"
