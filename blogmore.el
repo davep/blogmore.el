@@ -156,7 +156,7 @@ frontmatter is found, return nil."
 
 (defun blogmore--frontmatter ()
   "Return the frontmatter as a YAML object, or nil if no frontmatter is found."
-  (when-let ((bounds (blogmore--frontmatter-bounds)))
+  (when-let* ((bounds (blogmore--frontmatter-bounds)))
     (yaml-parse-string
      (buffer-substring-no-properties (car bounds) (cdr bounds))
      :object-key-type 'string
@@ -176,7 +176,7 @@ frontmatter is found, return nil."
                (yaml-encode
                 (seq-filter
                  (lambda (property)
-                   (when-let (value (cdr property))
+                   (when-let* ((value (cdr property)))
                      (not (eq value :null))))
                  ,frontmatter))
                "\n")))
@@ -250,7 +250,7 @@ function returns nil, otherwise PROPERTY is set to VALUE and the
 function returns t."
   (when (blogmore--frontmatter-bounds)
     (let ((frontmatter (blogmore--frontmatter)))
-      (if-let ((existing (assoc-string property frontmatter)))
+      (if-let* ((existing (assoc-string property frontmatter)))
           (setf (cdr existing) value)
         (setf frontmatter (append frontmatter (list (cons property value)))))
       (setf (blogmore--frontmatter) frontmatter))))
@@ -439,7 +439,7 @@ multiple blogs defined."
 
 If the current blog can't be determined, signal an error asking the user
 to select a blog to work on first."
-  (if-let ((blog (blogmore--chosen-blog-sans-error)))
+  (if-let* ((blog (blogmore--chosen-blog-sans-error)))
       blog
     (if blogmore-blogs
         (user-error "Please select a blog to work on first; see `blogmore-work-on'")
@@ -557,7 +557,7 @@ to select a blog to work on first."
 
 (defsubst blogmore--image-extension (image)
   "Get the extension of IMAGE, or nil if it doesn't have one."
-  (when-let ((extension (downcase (or (file-name-extension image) ""))))
+  (when-let* ((extension (downcase (or (file-name-extension image) ""))))
     (if (string= extension "jpg")
         "jpeg"
       extension)))
@@ -567,7 +567,7 @@ to select a blog to work on first."
 
 (defun blogmore--cycle-image-type (current)
   "Given image extension CURRENT return the next option."
-  (if-let ((next (cadr (member (blogmore--image-extension current) blogmore--image-type-options))))
+  (if-let* ((next (cadr (member (blogmore--image-extension current) blogmore--image-type-options))))
       next
     (car blogmore--image-type-options)))
 
@@ -595,7 +595,7 @@ If an image is found the return value is a list of the form:
 
 (defun blogmore--transform-image-at-point (transform)
   "Apply TRANSFORM to the image at point."
-  (if-let ((image (blogmore--image-at-point)))
+  (if-let* ((image (blogmore--image-at-point)))
       (save-excursion
         (replace-region-contents
          (line-beginning-position)
@@ -693,7 +693,7 @@ If an image is found the return value is a list of the form:
 
 (defun blogmore--post-series ()
   "Get the series for the current post as a list."
-  (when-let ((series (blogmore-get-frontmatter "series")))
+  (when-let* ((series (blogmore-get-frontmatter "series")))
     (if (stringp series)
         (string-split series "," t " ")
       series)))
@@ -715,7 +715,7 @@ If an image is found the return value is a list of the form:
 (defun blogmore-remove-series (series)
   "Remove SERIES from the post's series."
   (interactive
-   (list (when-let (series (blogmore--post-series))
+   (list (when-let* ((series (blogmore--post-series)))
            (completing-read "Series to remove: " series nil t))))
   (when series
     (blogmore-set-frontmatter "series" (remove series (blogmore--post-series)))
@@ -723,7 +723,7 @@ If an image is found the return value is a list of the form:
 
 (defun blogmore--post-tags ()
   "Get the tags for the current post as a list."
-  (when-let ((tags (blogmore-get-frontmatter "tags")))
+  (when-let* ((tags (blogmore-get-frontmatter "tags")))
     (if (stringp tags)
         (string-split tags "," t " ")
       tags)))
@@ -747,7 +747,7 @@ If an image is found the return value is a list of the form:
 (defun blogmore-remove-tag (tag)
   "Remove TAG from the post's tags."
   (interactive
-   (list (when-let (tags (blogmore--post-tags))
+   (list (when-let* ((tags (blogmore--post-tags)))
            (completing-read "Tag to remove: " tags nil t))))
   (when tag
     (blogmore-set-frontmatter "tags" (remove tag (blogmore--post-tags)))
@@ -831,7 +831,7 @@ If an image is found the return value is a list of the form:
 (defun blogmore-set-as-cover ()
   "Set the image at `point' as the cover image for the post."
   (interactive)
-  (if-let ((image (blogmore--image-at-point)))
+  (if-let* ((image (blogmore--image-at-point)))
       (blogmore-set-frontmatter "cover" (nth 1 image))
     (user-error "No image found at point")))
 
@@ -841,11 +841,11 @@ If an image is found the return value is a list of the form:
   (interactive (blogmore--post-picker))
   (blogmore--within-post
     (let ((frontmatter (blogmore-with-post post (blogmore--frontmatter))))
-      (when-let ((category (blogmore-get-frontmatter "category" frontmatter)))
+      (when-let* ((category (blogmore-get-frontmatter "category" frontmatter)))
         (blogmore-set-category category))
-      (when-let ((tags (blogmore-get-frontmatter "tags" frontmatter)))
+      (when-let* ((tags (blogmore-get-frontmatter "tags" frontmatter)))
         (blogmore-set-frontmatter "tags" tags))
-      (when-let ((series (blogmore-get-frontmatter "series" frontmatter)))
+      (when-let* ((series (blogmore-get-frontmatter "series" frontmatter)))
         (blogmore-set-frontmatter "series" series)))))
 
 ;;;###autoload
