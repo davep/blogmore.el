@@ -1,4 +1,4 @@
-;; Isolated development environment.
+;; Isolated development environment.  -*- lexical-binding: t; -*-
 
 (require 'package)
 
